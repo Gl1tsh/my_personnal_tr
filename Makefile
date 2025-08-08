@@ -14,14 +14,14 @@ NC = \033[0m
 dev:
 	@echo "$(YELLOW)🔥 Lancement dev - watch & localhost...$(NC)"
 	cd $(FRONT_DIR) && npm run dev
-	@echo "$(GREEN)✅ Dev lancé ! Ouvre http://localhost:8080 pour ton index.html. 😎$(NC)"
+	@echo "$(GREEN)✅ Dev lancé ! Ouvre http://localhost:3000 pour ton index.html. 😎$(NC)"
 
 # --- LiveChat quick start (build backend + stub + frontend) ---
 chat:
 	@echo "🔨 Compilation du backend…"
 	@cd backend && npm run build
 	@echo "🚀 Démarrage du stub WebSocket (port 3000)…"
-	@cd backend && npm run start
-	#sleep 2; \  # Wait 2s pour que WS soit up avant frontend
-	#echo "🌐 Démarrage du frontend (dev mode)…"; \
-	#cd ./frontend && npm run dev  # Utilise "run" pour clarté, assume script "dev"
+	@cd backend && npm run start \
+	sleep 2; \  # Wait 2s pour que WS soit up avant frontend
+	echo "🌐 Démarrage du frontend (dev mode)…"; \
+	cd frontend && npm run dev
