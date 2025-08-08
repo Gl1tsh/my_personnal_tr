@@ -1,5 +1,7 @@
 // src/index.ts
 
+import './style.css';
+
 import { initHomePage } from './pages/home.js';
 import { initChatPage } from './pages/livechat.js';
 import { loadBoardPage } from './pages/board.js';
