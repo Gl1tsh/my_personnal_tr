@@ -1,27 +1,64 @@
-# Makefile cool & aesthetic pour frontend ft_transcendence (HTML/Tailwind/TS SPA/livechat) 💻✨
+# Makefile ultra-minimaliste pour ft_transcendence frontend (HTML/Tailwind/TS SPA/livechat)
+# Socket IDs/messages en direct, phrases perso uniquement, npm.
 
 FRONT_DIR = frontend
 BACK_DIR = backend
 
-# Colors & emojis for cool output
+# Couleurs pour output épuré
 RED = \033[0;31m
 GREEN = \033[0;32m
 YELLOW = \033[0;33m
 BLUE = \033[0;34m
 NC = \033[0m
 
-# Dev mode (watch TS/Tailwind, localhost auto-reload on index.html - cool messages)
-dev:
-	@echo "$(YELLOW)🔥 Lancement dev - watch & localhost...$(NC)"
-	cd $(FRONT_DIR) && npm run dev
-	@echo "$(GREEN)✅ Dev lancé ! Ouvre http://localhost:3000 pour ton index.html. 😎$(NC)"
+# Commandes cross-platform
+ifeq ($(OS),Windows_NT)
+    RM = rmdir /S /Q
+    KILL = exec taskkill /F /IM node.exe >nul 2>&1
+    WAIT = timeout /T 3 /NOBREAK >nul
+    BG = start /B
+else
+    RM = rm -rf
+    KILL = exec pkill -f node > /dev/null 2>&1 || true
+    WAIT = sleep 3
+    BG = nohup
+endif
 
-# --- LiveChat quick start (build backend + stub + frontend) ---
+# Supprime écho des commandes
+.SILENT:
+
+# Lance tout : backend + frontend, socket IDs/messages en direct
 chat:
-	@echo "🔨 Compilation du backend…"
-	@cd backend && npm run build
-	@echo "🚀 Démarrage du stub WebSocket (port 3000)…"
-	@cd backend && npm run start \
-	sleep 2; \  # Wait 2s pour que WS soit up avant frontend
-	echo "🌐 Démarrage du frontend (dev mode)…"; \
-	cd frontend && npm run dev
+	@echo "$(BLUE)🔨 Compilation du backend…$(NC)"
+	@if [ -d "$(BACK_DIR)" ]; then \
+		cd $(BACK_DIR) && npx tsc -b && echo "$(GREEN)✅ Backend compilé !$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️ Pas de backend, skip.$(NC)"; \
+	fi
+	@echo "$(BLUE)🚀 Démarrage du backend WebSocket (port 3000)…$(NC)"
+	@if [ -d "$(BACK_DIR)" ]; then \
+		cd $(BACK_DIR) && $(BG) npm run start > /dev/null 2>&1 & \
+		$(WAIT); \
+		echo "$(GREEN)✅ WebSocket en route !$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️ Pas de backend, skip.$(NC)"; \
+	fi
+	@echo "$(YELLOW)🌐 Démarrage du frontend (port 3001)…$(NC)"
+	@if [ -d "$(FRONT_DIR)" ]; then \
+		cd $(FRONT_DIR) && npm run dev; \
+	else \
+		echo "$(RED)❌ Dossier frontend manquant.$(NC)"; \
+		exit 1; \
+	fi
+
+# Nettoie tout : processus + fichiers résiduels
+clean:
+	@echo "$(GREEN)🧹 Nettoyage des processus 🧹$(NC)"
+	-$(KILL)
+	@echo "$(GREEN)🗑️ Suppression des fichiers build…$(NC)"
+	-$(RM) $(BACK_DIR)/dist 2>/dev/null
+	-$(RM) $(FRONT_DIR)/dist 2>/dev/null
+	@echo "$(GREEN)✅ Fichiers build clean$(NC)"
+	@echo "$(GREEN)✅ Nettoyage terminé !$(NC)"
+
+.PHONY: chat clean

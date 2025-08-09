@@ -4,7 +4,9 @@ import { io } from 'socket.io-client';
 
 // 1) On force la connexion vers le stub Socket.IO sur http://localhost:3000
 export const socket = io('http://localhost:3000', {
-  transports: ['websocket'],
+  transports: ['websocket', 'polling'], // Permet fallback
+  timeout: 20000,
+  forceNew: true  // Force une nouvelle connexion
 });
 
 // 2) Quand on se connecte
