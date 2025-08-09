@@ -27,6 +27,23 @@ endif
 # Supprime écho des commandes
 .SILENT:
 
+# Installe les dépendances npm dans frontend et backend
+install:
+	@echo "$(BLUE)📥 Installation des deps dans frontend…$(NC)"
+	@if [ -d "$(FRONT_DIR)" ]; then \
+		cd $(FRONT_DIR) && npm install && echo "$(GREEN)✅ Deps frontend ok !$(NC)"; \
+	else \
+		echo "$(RED)❌ Pas de dossier frontend !$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)📥 Installation des deps dans backend…$(NC)"
+	@if [ -d "$(BACK_DIR)" ]; then \
+		cd $(BACK_DIR) && npm install && echo "$(GREEN)✅ Deps backend ok !$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️ Pas de dossier backend, skip.$(NC)"; \
+	fi
+	@echo "$(GREEN)🎉 Tout est prêt, lance 'make chat' !$(NC)"
+
 # Lance tout : backend + frontend, socket IDs/messages en direct
 chat:
 	@echo "$(BLUE)🔨 Compilation du backend…$(NC)"
