@@ -1,5 +1,5 @@
 # Makefile ultra-minimaliste pour ft_transcendence frontend (HTML/Tailwind/TS SPA/livechat)
-# Socket IDs/messages en direct, phrases perso uniquement, npm.
+# Socket IDs/messages en direct, phrases perso uniquement, npm, pas de nohup.out.
 
 FRONT_DIR = frontend
 BACK_DIR = backend
@@ -37,7 +37,7 @@ chat:
 	fi
 	@echo "$(BLUE)🚀 Démarrage du backend WebSocket (port 3000)…$(NC)"
 	@if [ -d "$(BACK_DIR)" ]; then \
-		cd $(BACK_DIR) && $(BG) npm run start > /dev/null 2>&1 & \
+		cd $(BACK_DIR) && nohup npm run start >/dev/null 2>&1 & \
 		$(WAIT); \
 		echo "$(GREEN)✅ WebSocket en route !$(NC)"; \
 	else \
