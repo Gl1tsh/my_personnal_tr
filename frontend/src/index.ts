@@ -9,6 +9,7 @@ import { initCreateRoomPage, initRoomPage } from './pages/room.js';
 import { initLoginPage } from './pages/login.js';
 import { initSignupPage } from './pages/signup.js';
 import { initProfilePage } from './pages/profile.js';
+import { initGame, cleanupGame } from './game/game';
 
 // Expose startPong() au window
 declare global {
@@ -82,6 +83,12 @@ export function navigateTo(page: string, push = true) {
     window.history.pushState(null, '', `#${page}`);
   }
   showPage(page.split('/')[0]);
+  // Initialisation spécifique pour la page game
+  if (page.split('/')[0] === 'game') {
+    initGame(); // Initialise le jeu quand on arrive sur #game
+  } else {
+    cleanupGame(); // Arrête le jeu si on quitte #game
+  }
   //initPage(page);
 }
 
@@ -95,7 +102,12 @@ window.addEventListener('DOMContentLoaded', () => {
   navigateTo(first);
 });
 
-// Fonction exposée à window pour lancer Pong
+// Remplace window.startPong
 window.startPong = () => {
-  console.log('Démarrage Pong !');
+  const startButton = document.getElementById('startGameButton') as HTMLButtonElement;
+  if (startButton) {
+    startButton.click(); // Simule un clic sur le bouton Start Game
+  } else {
+    console.log('Bouton Start Game non trouvé');
+  }
 };
