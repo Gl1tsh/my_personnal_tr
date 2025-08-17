@@ -30,12 +30,20 @@
 <!-- ================= HOME ================= -->
 			<section id="home" class="page hidden flex flex-col items-center justify-center pt-16 space-y-6">
 				<h1 class="text-4xl font-bold text-blue-400">Welcome to Transcendance</h1>
-				<div id="game" class="w-full h-80 border border-gray-600 bg-gray-800 rounded flex items-center justify-center">
-				</div>
 				<div class="flex space-x-4">
 					<button data-page="live-chat" class="px-4 py-2 border border-blue-400 rounded hover:bg-blue-500">LiveChat</button>
 					<button data-page="game" class="px-4 py-2 border border-blue-400 rounded hover:bg-blue-500">Play Game</button>
 					<button data-page="board" class="px-4 py-2 border border-blue-400 rounded hover:bg-blue-500">Board</button>
+				</div>
+			</section>
+
+<!-- ================= GAME ================= -->
+			<section id="game" class="page hidden flex flex-col items-center justify-center pt-16 space-y-6">
+				<h1 class="text-4xl font-bold text-blue-400">Pong Game</h1>
+				<canvas id="pongCanvas" class="bg-black border-2 border-white" width="800" height="600"></canvas>
+				<div class="text-center mt-4">
+					<p>Controls: W/S for left paddle | Arrow Up/Down for right paddle</p>
+					<button id="startGameButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Start Game</button>
 				</div>
 			</section>
 
