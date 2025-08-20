@@ -19,8 +19,8 @@ interface Paddle {
 interface Ball {
   x: number;    // Position horizontale
   y: number;    // Position verticale
-  dx: number;   // Vitesse horizontale
-  dy: number;   // Vitesse verticale
+  speed_x: number;   // Vitesse horizontale
+  speed_y: number;   // Vitesse verticale
 }
 
 // === Variables globales ===
@@ -32,7 +32,7 @@ const SCORE_RIGHT_X = 3 * CANVAS_WIDTH / 4;                    // Position X du 
 const PADDLE_MAX_Y = CANVAS_HEIGHT - PADDLE_HEIGHT;            // Limite supérieure des paddles
 let leftPaddle: Paddle = { x: 0, y: INITIAL_PADDLE_Y, score: 0 };
 let rightPaddle: Paddle = { x: CANVAS_WIDTH - PADDLE_WIDTH, y: INITIAL_PADDLE_Y, score: 0 };
-let ball: Ball = { x: BALL_CENTER_X, y: BALL_CENTER_Y, dx: BALL_SPEED, dy: BALL_SPEED };
+let ball: Ball = { x: BALL_CENTER_X, y: BALL_CENTER_Y, speed_x: BALL_SPEED, speed_y: BALL_SPEED };
 let gameRunning = false;    // Jeu en cours
 let gamePaused = false;     // Jeu en pause
 let animationFrameId: number; // ID de l'animation
@@ -69,18 +69,18 @@ function update() {
   if (!gameRunning || gamePaused) return;
 
   // Déplacer la balle dans les deux directions
-  ball.x += ball.dx;
-  ball.y += ball.dy;
+  ball.x += ball.speed_x;
+  ball.y += ball.speed_y;
 
   // Rebondir sur les murs
-  if (ball.y < 0 || ball.y > CANVAS_HEIGHT) ball.dy = -ball.dy;
+  if (ball.y < 0 || ball.y > CANVAS_HEIGHT) ball.speed_y = -ball.speed_y;
 
   // Collisions avec les paddles
   if (ball.x < PADDLE_WIDTH && ball.y > leftPaddle.y && ball.y < leftPaddle.y + PADDLE_HEIGHT) {
-    ball.dx = -ball.dx;
+    ball.speed_x = -ball.speed_x;
   }
   if (ball.x > CANVAS_WIDTH - PADDLE_WIDTH && ball.y > rightPaddle.y && ball.y < rightPaddle.y + PADDLE_HEIGHT) {
-    ball.dx = -ball.dx;
+    ball.speed_x = -ball.speed_x;
   }
 
   // Points et reset
@@ -105,8 +105,8 @@ function update() {
 function resetBall() {
   ball.x = BALL_CENTER_X;
   ball.y = BALL_CENTER_Y;
-  ball.dx = -ball.dx; // Inverser la direction horizontale
-  ball.dy = Math.random() > 0.5 ? BALL_SPEED : -BALL_SPEED; // Direction verticale aléatoire
+  ball.speed_x = -ball.speed_x; // Inverser la direction horizontale
+  ball.speed_y = Math.random() > 0.5 ? BALL_SPEED : -BALL_SPEED; // Direction verticale aléatoire
   leftPaddle.y = INITIAL_PADDLE_Y;  // Réinitialiser le paddle gauche
   rightPaddle.y = INITIAL_PADDLE_Y; // Réinitialiser le paddle droit
 }
@@ -225,7 +225,7 @@ export function cleanupGame() {
 function resetGameState() {
   leftPaddle = { x: 0, y: INITIAL_PADDLE_Y, score: 0 };
   rightPaddle = { x: CANVAS_WIDTH - PADDLE_WIDTH, y: INITIAL_PADDLE_Y, score: 0 };
-  ball = { x: BALL_CENTER_X, y: BALL_CENTER_Y, dx: BALL_SPEED, dy: BALL_SPEED };
+  ball = { x: BALL_CENTER_X, y: BALL_CENTER_Y, speed_x: BALL_SPEED, speed_y: BALL_SPEED };
   gameRunning = false;
   botDelay = 300; // Réinitialiser le délai du bot
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
