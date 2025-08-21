@@ -1,15 +1,6 @@
 // src/game.ts
 
-// === Constantes du jeu ===
-const CANVAS_WIDTH = 800;         // Largeur du canvas
-const CANVAS_HEIGHT = 600;        // Hauteur du canvas
-const PADDLE_WIDTH = 10;          // Largeur des paddles
-const PADDLE_HEIGHT = 100;        // Hauteur des paddles
-const BALL_SIZE = 10;             // Taille de la balle
-const PADDLE_SPEED = 2;           // Vitesse des paddles
-const BALL_SPEED = 2;             // Vitesse de la balle (fixe, pas de changement)
-
-// === Types pour organiser les données ===
+// ==================== Types pour organiser les données ====================
 interface Paddle {
   x: number;    // Position horizontale
   y: number;    // Position verticale
@@ -23,7 +14,16 @@ interface Ball {
   speed_y: number;   // Vitesse verticale
 }
 
-// === Variables globales ===
+// ==================== Configuration du Pong ====================
+const CANVAS_WIDTH = 800;         // Largeur du canvas
+const CANVAS_HEIGHT = 600;        // Hauteur du canvas
+const PADDLE_WIDTH = 10;          // Largeur des paddles
+const PADDLE_HEIGHT = 100;        // Hauteur des paddles
+const BALL_SIZE = 10;             // Taille de la balle
+const PADDLE_SPEED = 2;           // Vitesse des paddles
+const BALL_SPEED = 2;             // Vitesse de la balle (fixe, pas de changement)
+
+// ==================== État du jeu ====================
 const INITIAL_PADDLE_Y = CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2; // Position verticale initiale des paddles
 const BALL_CENTER_X = CANVAS_WIDTH / 2;                        // Centre horizontal de la balle
 const BALL_CENTER_Y = CANVAS_HEIGHT / 2;                       // Centre vertical de la balle
@@ -53,8 +53,7 @@ const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 window.addEventListener('keydown', (e) => keys.add(e.key));
 window.addEventListener('keyup', (e) => keys.delete(e.key));
 
-// === Fonctions simples ===
-
+// ==================== INITIALISATION and UPDATE ====================
 // Dessiner le jeu
 function draw() {
   if (!ctx) return;
@@ -68,16 +67,41 @@ function draw() {
   ctx.fillText(rightPaddle.score.toString(), SCORE_RIGHT_X, 50);
 }
 
+// Initialiser le jeu
+export function initGame() {
+  if (!canvas || !ctx) {
+    console.error('Canvas ou contexte non trouvé');
+    return;
+  }
+  resetGameState();
+  draw();
+  const startButton = document.getElementById('startGameButton') as HTMLButtonElement;
+  startButton.addEventListener('click', startGame);
+  const pauseButton = document.getElementById('pauseGameButton') as HTMLButtonElement;
+  pauseButton.addEventListener('click', pauseGame);
+  const resetButton = document.getElementById('resetGameButton') as HTMLButtonElement;
+  resetButton.addEventListener('click', resetGame);
+}
+
+// Gérer les touches du joueur
+function handleInput() {
+  if (keys.has('w') && leftPaddle.y > 0) leftPaddle.y -= PADDLE_SPEED;
+  if (keys.has('s') && leftPaddle.y < PADDLE_MAX_Y) leftPaddle.y += PADDLE_SPEED;
+}
+
+
 // Mettre à jour le jeu
 function update() {
-  if (!gameRunning || gamePaused) return;
+  if (!gameRunning || gamePaused)
+    return;
 
   // Déplacer la balle dans les deux directions
   ball.x += ball.speed_x;
   ball.y += ball.speed_y;
 
   // Rebondir sur les murs
-  if (ball.y < 0 || ball.y > CANVAS_HEIGHT) ball.speed_y = -ball.speed_y;
+  if (ball.y < 0 || ball.y > CANVAS_HEIGHT)
+    ball.speed_y = -ball.speed_y;
 
   // Collisions avec les paddles
   if (ball.x < LEFT_PADDLE_EDGE && ball.y > leftPaddle.y && ball.y < leftPaddle.y + PADDLE_HEIGHT) {
@@ -105,53 +129,7 @@ function update() {
   animationFrameId = requestAnimationFrame(update);
 }
 
-// Réinitialiser la balle et les paddles après un goal
-function resetBall() {
-  ball.x = BALL_CENTER_X;
-  ball.y = BALL_CENTER_Y;
-  ball.speed_x = -ball.speed_x; // Inverser la direction horizontale
-  ball.speed_y = Math.random() > 0.5 ? BALL_SPEED : -BALL_SPEED; // Direction verticale aléatoire
-  leftPaddle.y = INITIAL_PADDLE_Y;  // Réinitialiser le paddle gauche
-  rightPaddle.y = INITIAL_PADDLE_Y; // Réinitialiser le paddle droit
-}
-
-// Ajuster la difficulté du bot par intervalles de score
-function adjustBotDifficulty() {
-  const totalScore = leftPaddle.score + rightPaddle.score;
-  if (totalScore < 5) {
-    botDelay = 280; // Facile (0-4 points)
-  } else if (totalScore < 10) {
-    botDelay = 260; // Moyen (5-9 points, augmenté pour être moins dur)
-  } else {
-    botDelay = 250; // Difficile (10+ points, fixé pour éviter l'inbattabilité)
-  }
-  console.log('Nouveau délai du bot:', botDelay); // Débogage
-}
-
-// Gérer les touches du joueur
-function handleInput() {
-  if (keys.has('w') && leftPaddle.y > 0) leftPaddle.y -= PADDLE_SPEED;
-  if (keys.has('s') && leftPaddle.y < PADDLE_MAX_Y) leftPaddle.y += PADDLE_SPEED;
-}
-
-// Faire bouger le bot
-function moveBot() {
-  if (!gameRunning || gamePaused) return;
-
-  // Position cible : centre du paddle aligné avec la balle
-  const targetVerticalPosition = ball.y - TARGET_POSITION_OFFSET;
-
-  // Simuler un délai (si le temps est écoulé, bouger)
-  if (Math.random() < 0.2 * (1000 / botDelay)) { // Probabilité ajustée
-    console.log('Bot bouge, targetY:', targetVerticalPosition, 'currentY:', rightPaddle.y); // Débogage
-    if (targetVerticalPosition > rightPaddle.y && rightPaddle.y < PADDLE_MAX_Y) {
-      rightPaddle.y += PADDLE_SPEED;
-    } else if (targetVerticalPosition < rightPaddle.y && rightPaddle.y > 0) {
-      rightPaddle.y -= PADDLE_SPEED;
-    }
-  }
-}
-
+// ==================== START and PAUSE ====================
 // Lancer le jeu
 function startGame() {
   if (!gameRunning) {
@@ -177,6 +155,27 @@ function pauseGame() {
   }
 }
 
+// ==================== RESET and CLEAN ====================
+// Réinitialiser la balle et les paddles après un goal
+function resetBall() {
+  ball.x = BALL_CENTER_X;
+  ball.y = BALL_CENTER_Y;
+  ball.speed_x = -ball.speed_x; // Inverser la direction horizontale
+  ball.speed_y = Math.random() > 0.5 ? BALL_SPEED : -BALL_SPEED; // Direction verticale aléatoire
+  leftPaddle.y = INITIAL_PADDLE_Y;  // Réinitialiser le paddle gauche
+  rightPaddle.y = INITIAL_PADDLE_Y; // Réinitialiser le paddle droit
+}
+
+// Réinitialiser l'état
+function resetGameState() {
+  leftPaddle = { x: 0, y: INITIAL_PADDLE_Y, score: 0 };
+  rightPaddle = { x: RIGHT_PADDLE_STARTING_X_POSITION, y: INITIAL_PADDLE_Y, score: 0 };
+  ball = { x: BALL_CENTER_X, y: BALL_CENTER_Y, speed_x: BALL_SPEED, speed_y: BALL_SPEED };
+  gameRunning = false;
+  botDelay = 300; // Réinitialiser le délai du bot
+  if (animationFrameId) cancelAnimationFrame(animationFrameId);
+}
+
 // Réinitialiser le jeu
 function resetGame() {
   if (gameRunning) {
@@ -188,27 +187,12 @@ function resetGame() {
   }
 }
 
-// Initialiser le jeu
-export function initGame() {
-  if (!canvas || !ctx) {
-    console.error('Canvas ou contexte non trouvé');
-    return;
-  }
-  resetGameState();
-  draw();
-  const startButton = document.getElementById('startGameButton') as HTMLButtonElement;
-  startButton.addEventListener('click', startGame);
-  const pauseButton = document.getElementById('pauseGameButton') as HTMLButtonElement;
-  pauseButton.addEventListener('click', pauseGame);
-  const resetButton = document.getElementById('resetGameButton') as HTMLButtonElement;
-  resetButton.addEventListener('click', resetGame);
-}
-
 // Nettoyer
 export function cleanupGame() {
   gameRunning = false;
   gamePaused = false;
-  if (animationFrameId) cancelAnimationFrame(animationFrameId);
+  if (animationFrameId)
+    cancelAnimationFrame(animationFrameId);
   resetGameState();
   const startButton = document.getElementById('startGameButton') as HTMLButtonElement;
   if (startButton) {
@@ -225,12 +209,35 @@ export function cleanupGame() {
   }
 }
 
-// Réinitialiser l'état
-function resetGameState() {
-  leftPaddle = { x: 0, y: INITIAL_PADDLE_Y, score: 0 };
-  rightPaddle = { x: RIGHT_PADDLE_STARTING_X_POSITION, y: INITIAL_PADDLE_Y, score: 0 };
-  ball = { x: BALL_CENTER_X, y: BALL_CENTER_Y, speed_x: BALL_SPEED, speed_y: BALL_SPEED };
-  gameRunning = false;
-  botDelay = 300; // Réinitialiser le délai du bot
-  if (animationFrameId) cancelAnimationFrame(animationFrameId);
+// ==================== BOT ====================
+// Faire bouger le bot
+function moveBot() {
+  if (!gameRunning || gamePaused)
+    return;
+
+  // Position cible : centre du paddle aligné avec la balle
+  const targetVerticalPosition = ball.y - TARGET_POSITION_OFFSET;
+
+  // Simuler un délai (si le temps est écoulé, bouger)
+  if (Math.random() < 0.2 * (1000 / botDelay)) { // Probabilité ajustée
+    console.log('Bot bouge, targetY:', targetVerticalPosition, 'currentY:', rightPaddle.y); // Débogage
+    if (targetVerticalPosition > rightPaddle.y && rightPaddle.y < PADDLE_MAX_Y) {
+      rightPaddle.y += PADDLE_SPEED;
+    } else if (targetVerticalPosition < rightPaddle.y && rightPaddle.y > 0) {
+      rightPaddle.y -= PADDLE_SPEED;
+    }
+  }
+}
+
+// Ajuster la difficulté du bot par intervalles de score
+function adjustBotDifficulty() {
+  const totalScore = leftPaddle.score + rightPaddle.score;
+  if (totalScore < 5) {
+    botDelay = 280; // Facile (0-4 points)
+  } else if (totalScore < 10) {
+    botDelay = 260; // Moyen (5-9 points, augmenté pour être moins dur)
+  } else {
+    botDelay = 250; // Difficile (10+ points, fixé pour éviter l'inbattabilité)
+  }
+  console.log('Nouveau délai du bot:', botDelay); // Débogage
 }
