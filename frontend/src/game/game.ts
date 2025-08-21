@@ -20,8 +20,9 @@ const CANVAS_HEIGHT = 600;        // Hauteur du canvas
 const PADDLE_WIDTH = 10;          // Largeur des paddles
 const PADDLE_HEIGHT = 100;        // Hauteur des paddles
 const BALL_SIZE = 10;             // Taille de la balle
-const PADDLE_SPEED = 2;           // Vitesse des paddles
-const BALL_SPEED = 2;             // Vitesse de la balle (fixe, pas de changement)
+const PADDLE_SPEED = 3;           // Vitesse des paddles
+const BALL_SPEED = 3;             // Vitesse de la balle (fixe, pas de changement)
+const WINNING_SCORE = 3; // Score pour gagner la partie
 
 // ==================== État du jeu ====================
 const INITIAL_PADDLE_Y = CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2; // Position verticale initiale des paddles
@@ -98,6 +99,12 @@ function update() {
   if (!gameRunning || gamePaused)
     return;
 
+  // Vérifier si un joueur a gagné
+  if (leftPaddle.score >= WINNING_SCORE || rightPaddle.score >= WINNING_SCORE) {
+    endGame();
+    return; // Arrêter la mise à jour
+  }
+
   // Déplacer la balle dans les deux directions
   ball.x += ball.speed_x;
   ball.y += ball.speed_y;
@@ -136,11 +143,16 @@ function update() {
 // Lancer le jeu
 function startGame() {
   if (!gameRunning) {
+    resetGameState(); // Reset complet (scores, positions, botDelay)
     gameRunning = true;
     gamePaused = false;
-    console.log('Jeu démarré, délai bot:', botDelay); // Débogage
+    const messageElement = document.getElementById('gameMessageWinOrLose') as HTMLDivElement;
+    messageElement.classList.add('hidden');
+    console.log('Jeu démarré, délai bot:', botDelay);
     update();
     (document.getElementById('startGameButton') as HTMLButtonElement).disabled = true;
+    (document.getElementById('pauseGameButton') as HTMLButtonElement).disabled = false; // Réactiver "Pause"
+    messageElement.classList.remove('text-green-400', 'text-red-400'); // Enlever les couleurs au relance
   }
 }
 
@@ -158,7 +170,7 @@ function pauseGame() {
   }
 }
 
-// ==================== RESET and CLEAN ====================
+// ==================== RESET, CLEAN and END ====================
 // Réinitialiser la balle et les paddles après un goal
 function resetBall() {
   ball.x = BALL_CENTER_X;
@@ -182,21 +194,22 @@ function resetGameState() {
 
 // Réinitialiser le jeu
 function resetGame() {
-  if (gameRunning) {
-    resetGameState();
-    gamePaused = false;
-    (document.getElementById('pauseGameButton') as HTMLButtonElement).textContent = 'Pause';
-    draw();
-    (document.getElementById('startGameButton') as HTMLButtonElement).disabled = false;
-  }
+  resetGameState(); // Reset complet
+  gamePaused = false;
+  const messageElement = document.getElementById('gameMessageWinOrLose') as HTMLDivElement;
+  messageElement.classList.add('hidden');
+  messageElement.classList.remove('text-green-400', 'text-red-400');
+  (document.getElementById('pauseGameButton') as HTMLButtonElement).textContent = 'Pause';
+  (document.getElementById('pauseGameButton') as HTMLButtonElement).disabled = false; // Réactiver "Pause"
+  (document.getElementById('startGameButton') as HTMLButtonElement).disabled = false; // Réactiver "Start Game"
+  draw();
 }
 
 // Nettoyer
 export function cleanupGame() {
   gameRunning = false;
   gamePaused = false;
-  if (animationFrameId)
-    cancelAnimationFrame(animationFrameId);
+  if (animationFrameId) cancelAnimationFrame(animationFrameId);
   resetGameState();
   const startButton = document.getElementById('startGameButton') as HTMLButtonElement;
   if (startButton) {
@@ -205,12 +218,29 @@ export function cleanupGame() {
   }
   const pauseButton = document.getElementById('pauseGameButton') as HTMLButtonElement;
   if (pauseButton) {
+    pauseButton.disabled = false;
     pauseButton.removeEventListener('click', pauseGame);
   }
   const resetButton = document.getElementById('resetGameButton') as HTMLButtonElement;
   if (resetButton) {
+    resetButton.disabled = false;
     resetButton.removeEventListener('click', resetGame);
   }
+}
+
+// Terminer la partie et afficher le message
+function endGame() {
+  gameRunning = false;
+  const messageElement = document.getElementById('gameMessageWinOrLose') as HTMLDivElement;
+  messageElement.classList.remove('hidden');
+  if (leftPaddle.score >= WINNING_SCORE) {
+    messageElement.textContent = 'YOU WIN !';
+    messageElement.classList.add('text-green-400');
+  } else if (rightPaddle.score >= WINNING_SCORE) {
+    messageElement.textContent = 'Sale merde tu viens de perdre contre un bot nul a chier en plus, tu merite vraiment de nettoyer le cul des vieux dans un EMS';
+    messageElement.classList.add('text-red-400');
+  }
+  (document.getElementById('startGameButton') as HTMLButtonElement).disabled = false; // Réactiver Start Game pour relancer
 }
 
 // ==================== BOT ====================
@@ -236,9 +266,9 @@ function moveBot() {
 // Ajuster la difficulté du bot par intervalles de score
 function adjustBotDifficulty() {
   const totalScore = leftPaddle.score + rightPaddle.score;
-  if (totalScore < 5) {
+  if (totalScore == 1) {
     botDelay = 280; // Facile (0-4 points)
-  } else if (totalScore < 10) {
+  } else if (totalScore == 2) {
     botDelay = 260; // Moyen (5-9 points, augmenté pour être moins dur)
   } else {
     botDelay = 250; // Difficile (10+ points, fixé pour éviter l'inbattabilité)
