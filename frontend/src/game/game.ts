@@ -30,8 +30,12 @@ const BALL_CENTER_Y = CANVAS_HEIGHT / 2;                       // Centre vertica
 const SCORE_LEFT_X = CANVAS_WIDTH / 4;                         // Position X du score gauche
 const SCORE_RIGHT_X = 3 * CANVAS_WIDTH / 4;                    // Position X du score droit
 const PADDLE_MAX_Y = CANVAS_HEIGHT - PADDLE_HEIGHT;            // Limite supérieure des paddles
+const RIGHT_PADDLE_STARTING_X_POSITION = CANVAS_WIDTH - PADDLE_WIDTH; // Position horizontale initiale du paddle droit
+const TARGET_POSITION_OFFSET = PADDLE_HEIGHT / 2;              // Décalage pour centrer la position cible du bot
+const LEFT_PADDLE_EDGE = PADDLE_WIDTH;                         // Bord gauche du paddle gauche
+const RIGHT_PADDLE_EDGE = CANVAS_WIDTH - PADDLE_WIDTH;         // Bord droit du paddle droit
 let leftPaddle: Paddle = { x: 0, y: INITIAL_PADDLE_Y, score: 0 };
-let rightPaddle: Paddle = { x: CANVAS_WIDTH - PADDLE_WIDTH, y: INITIAL_PADDLE_Y, score: 0 };
+let rightPaddle: Paddle = { x: RIGHT_PADDLE_STARTING_X_POSITION, y: INITIAL_PADDLE_Y, score: 0 };
 let ball: Ball = { x: BALL_CENTER_X, y: BALL_CENTER_Y, speed_x: BALL_SPEED, speed_y: BALL_SPEED };
 let gameRunning = false;    // Jeu en cours
 let gamePaused = false;     // Jeu en pause
@@ -76,10 +80,10 @@ function update() {
   if (ball.y < 0 || ball.y > CANVAS_HEIGHT) ball.speed_y = -ball.speed_y;
 
   // Collisions avec les paddles
-  if (ball.x < PADDLE_WIDTH && ball.y > leftPaddle.y && ball.y < leftPaddle.y + PADDLE_HEIGHT) {
+  if (ball.x < LEFT_PADDLE_EDGE && ball.y > leftPaddle.y && ball.y < leftPaddle.y + PADDLE_HEIGHT) {
     ball.speed_x = -ball.speed_x;
   }
-  if (ball.x > CANVAS_WIDTH - PADDLE_WIDTH && ball.y > rightPaddle.y && ball.y < rightPaddle.y + PADDLE_HEIGHT) {
+  if (ball.x > RIGHT_PADDLE_EDGE && ball.y > rightPaddle.y && ball.y < rightPaddle.y + PADDLE_HEIGHT) {
     ball.speed_x = -ball.speed_x;
   }
 
@@ -135,14 +139,14 @@ function moveBot() {
   if (!gameRunning || gamePaused) return;
 
   // Position cible : centre du paddle aligné avec la balle
-  const targetY = ball.y - PADDLE_HEIGHT / 2;
+  const targetVerticalPosition = ball.y - TARGET_POSITION_OFFSET;
 
   // Simuler un délai (si le temps est écoulé, bouger)
   if (Math.random() < 0.2 * (1000 / botDelay)) { // Probabilité ajustée
-    console.log('Bot bouge, targetY:', targetY, 'currentY:', rightPaddle.y); // Débogage
-    if (targetY > rightPaddle.y && rightPaddle.y < PADDLE_MAX_Y) {
+    console.log('Bot bouge, targetY:', targetVerticalPosition, 'currentY:', rightPaddle.y); // Débogage
+    if (targetVerticalPosition > rightPaddle.y && rightPaddle.y < PADDLE_MAX_Y) {
       rightPaddle.y += PADDLE_SPEED;
-    } else if (targetY < rightPaddle.y && rightPaddle.y > 0) {
+    } else if (targetVerticalPosition < rightPaddle.y && rightPaddle.y > 0) {
       rightPaddle.y -= PADDLE_SPEED;
     }
   }
@@ -224,7 +228,7 @@ export function cleanupGame() {
 // Réinitialiser l'état
 function resetGameState() {
   leftPaddle = { x: 0, y: INITIAL_PADDLE_Y, score: 0 };
-  rightPaddle = { x: CANVAS_WIDTH - PADDLE_WIDTH, y: INITIAL_PADDLE_Y, score: 0 };
+  rightPaddle = { x: RIGHT_PADDLE_STARTING_X_POSITION, y: INITIAL_PADDLE_Y, score: 0 };
   ball = { x: BALL_CENTER_X, y: BALL_CENTER_Y, speed_x: BALL_SPEED, speed_y: BALL_SPEED };
   gameRunning = false;
   botDelay = 300; // Réinitialiser le délai du bot
