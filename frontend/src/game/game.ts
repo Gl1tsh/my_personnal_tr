@@ -56,7 +56,8 @@ window.addEventListener('keyup', (e) => keys.delete(e.key));
 // ==================== INITIALISATION and UPDATE ====================
 // Dessiner le jeu
 function draw() {
-  if (!ctx) return;
+  if (!ctx)
+    return;
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   ctx.fillStyle = 'white';
   ctx.fillRect(leftPaddle.x, leftPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
@@ -85,8 +86,10 @@ export function initGame() {
 
 // Gérer les touches du joueur
 function handleInput() {
-  if (keys.has('w') && leftPaddle.y > 0) leftPaddle.y -= PADDLE_SPEED;
-  if (keys.has('s') && leftPaddle.y < PADDLE_MAX_Y) leftPaddle.y += PADDLE_SPEED;
+  if (keys.has('w') && leftPaddle.y > 0)
+    leftPaddle.y -= PADDLE_SPEED;
+  if (keys.has('s') && leftPaddle.y < PADDLE_MAX_Y)
+    leftPaddle.y += PADDLE_SPEED;
 }
 
 
@@ -173,7 +176,8 @@ function resetGameState() {
   ball = { x: BALL_CENTER_X, y: BALL_CENTER_Y, speed_x: BALL_SPEED, speed_y: BALL_SPEED };
   gameRunning = false;
   botDelay = 300; // Réinitialiser le délai du bot
-  if (animationFrameId) cancelAnimationFrame(animationFrameId);
+  if (animationFrameId)
+    cancelAnimationFrame(animationFrameId);
 }
 
 // Réinitialiser le jeu
