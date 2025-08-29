@@ -54,7 +54,7 @@ chat:
 	fi
 	@echo "$(BLUE)🚀 Démarrage du backend WebSocket (port 3000)…$(NC)"
 	@if [ -d "$(BACK_DIR)" ]; then \
-		cd $(BACK_DIR) && nohup npm run start >/dev/null 2>&1 & \
+		cd $(BACK_DIR) && nohup npm run chat >/dev/null 2>&1 & \
 		$(WAIT); \
 		echo "$(GREEN)✅ WebSocket en route !$(NC)"; \
 	else \
