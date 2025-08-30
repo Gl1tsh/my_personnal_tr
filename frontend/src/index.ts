@@ -2,24 +2,23 @@
 
 import './style.css';
 
+import { AudioManager } from './audio/AudioManager';
+import { EntranceScreen } from './entrance/EntranceScreen';
+import { initGame, cleanupGame } from './game/game';
 import { initHomePage } from './pages/home.js';
 import { initChatPage } from './pages/livechat.js';
-import { loadBoardPage } from './pages/board.js';
-import { initCreateRoomPage, initRoomPage } from './pages/room.js';
 import { initLoginPage } from './pages/login.js';
 import { initSignupPage } from './pages/signup.js';
-import { initProfilePage } from './pages/profile.js';
-import { initGame, cleanupGame } from './game/game';
 
-// Expose startPong() au window
+// Expose startPong() to window
 declare global {
   interface Window {
     startPong: () => void;
   }
 }
-export {}; // Force le mode module TS
+export {}; // Force TS module mode
 
-// Toutes les pages de l’app
+// All app pages
 const pages = [
   'home',
   'game',
@@ -33,42 +32,38 @@ const pages = [
 ] as const;
 type Page = (typeof pages)[number];
 
-// Affiche la page demandée et cache les autres
+// Show requested page and hide others
 function showPage(page: string) {
   pages.forEach((p) => {
-    document.getElementById(p)!.classList.toggle('hidden', p !== page);
+    const element = document.getElementById(p);
+    if (element) {
+      element.classList.toggle('hidden', p !== page);
+    }
   });
 }
 
-initHomePage();
-initChatPage();
-//loadBoardPage();
-//initRoomPage();
-//initCreateRoomPage();
-initLoginPage();
-initSignupPage();
-/*
-  // For the profile page, it's either #profile or #profile/:id
-  const profileRegex = /^profile(\/[a-zA-Z0-9]+)?$/;
-  if (page === 'profile' || profileRegex.test(page)) {
-    console.log('Initializing profile page');
-    return initProfilePage();
-  }
+// Initialize basic pages
+function initPages() {
+  initHomePage();
+  initChatPage();
+  initLoginPage();
+  initSignupPage();
 }
-*/
 
-// Lie les clics de la navbar
+// Handle navbar clicks
 function initNav() {
   const links = document.querySelectorAll<HTMLElement>('[data-page]');
   links.forEach((link) => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const target = link.dataset.page as Page;
-      navigateTo(target);
+      if (target) {
+        navigateTo(target);
+      }
     });
   });
 
-  // Support du back/forward
+  // Handle back/forward
   window.addEventListener('popstate', () => {
     const hash = window.location.hash.slice(1) as Page;
     if (pages.includes(hash)) {
@@ -77,37 +72,48 @@ function initNav() {
   });
 }
 
-// Change de page et met à jour l’URL (pushState par défaut)
+// Change page and update URL (pushState by default)
 export function navigateTo(page: string, push = true) {
   if (push) {
     window.history.pushState(null, '', `#${page}`);
   }
   showPage(page.split('/')[0]);
-  // Initialisation spécifique pour la page game
+  // Specific initialization for game page
   if (page.split('/')[0] === 'game') {
-    initGame(); // Initialise le jeu quand on arrive sur #game
+    initGame(); // Initialize game when navigating to #game
   } else {
-    cleanupGame(); // Arrête le jeu si on quitte #game
+    cleanupGame(); // Stop game when leaving #game
   }
-  //initPage(page);
 }
 
-// Démarrage de l’app
+// App startup
 window.addEventListener('DOMContentLoaded', () => {
+  // Initialize all pages
+  initPages();
+
+  // Initialize navigation
   initNav();
 
-  // Page initiale selon le hash ou home
+  // Initialize audio manager
+  const audioManager = AudioManager.getInstance();
+
+  // Initialize entrance screen with audio callback
+  new EntranceScreen(async () => {
+    await audioManager.playMusic();
+  });
+
+  // Initial page based on hash or home
   const hash = window.location.hash.substring(1);
   const first = hash !== '' ? hash : 'home';
   navigateTo(first);
 });
 
-// Remplace window.startPong
+// Replace window.startPong
 window.startPong = () => {
   const startButton = document.getElementById('startGameButton') as HTMLButtonElement;
   if (startButton) {
-    startButton.click(); // Simule un clic sur le bouton Start Game
+    startButton.click(); // Simulate click on Start Game button
   } else {
-    console.log('Bouton Start Game non trouvé');
+    console.log('Start Game button not found');
   }
 };
