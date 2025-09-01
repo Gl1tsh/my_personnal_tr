@@ -32,81 +32,133 @@ async function fetchUserProfile(): Promise<UserProfile> {
 }
 
 // element du profil
-function renderProfile(container: HTMLElement, user: Profile, isDemo: boolean) {
+function renderProfile(container: HTMLElement, user: Profile) {
   container.innerHTML = `
-    ${
-      isDemo
-        ? `<div class="text-center text-yellow-500 mb-4">
-      Mode démo : Backend non disponible
-    </div>`
-        : ''
-    }
-    <div class="bg-gray-800 rounded-2xl shadow-xl p-10 flex flex-col items-center gap-8 max-w-md mx-auto">
-      <h2 class="text-3xl font-bold text-white">${user.displayName}</h2>
-      <img src="${user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.displayName}`}" alt="Avatar"
-           class="w-32 h-32 rounded-full border-4 border-blue-500 shadow mb-4" />
-
-      <div class="flex gap-6">
-        <!-- Victoires en vert -->
-        <div class="text-center">
-          <div class="text-lg font-bold text-green-400">${0}</div>
-          <div class="text-gray-400">Victoires</div>
-        </div>
-        <!-- Défaites en rouge -->
-        <div class="text-center">
-          <div class="text-lg font-bold text-red-400">${0}</div>
-          <div class="text-gray-400">Défaites</div>
-        </div>
-        <!-- Matchs neutre -->
-        <div class="text-center">
-          <div class="text-lg font-bold text-white">${0}</div>
-          <div class="text-gray-400">Matchs</div>
+    <div class="glass-morphism p-8 rounded-lg">
+      <!-- En-tête du profil -->
+      <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-8">
+          <img src="${user.avatar}" alt="Avatar" class="w-32 h-32 rounded-full border-4 border-white/10 shadow-lg"/>
+          <div>
+            <h2 class="text-4xl font-light tracking-wider text-white/90 mb-4">${user.displayName}</h2>
+            <div class="flex gap-4">
+              <button id="dm-button" class="glass-button">
+                💬 DISCUTER
+              </button>
+              <button id="challenge-button" class="glass-button">
+                ⚔️ DÉFIER
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <button id="dm-button"
-              class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-2 rounded">
-        💬 Discuter
-      </button>
+      <!-- Statistiques -->
+      <div class="grid grid-cols-3 gap-4 mb-8">
+        <div class="glass-morphism p-4 rounded text-center">
+          <div class="text-2xl font-bold text-white/90">#${user.rank}</div>
+          <div class="text-white/60 text-sm tracking-wider">RANG</div>
+        </div>
+        <div class="glass-morphism p-4 rounded text-center">
+          <div class="text-2xl font-bold text-green-400">${user.wins}</div>
+          <div class="text-white/60 text-sm tracking-wider">VICTOIRES</div>
+        </div>
+        <div class="glass-morphism p-4 rounded text-center">
+          <div class="text-2xl font-bold text-red-400">${user.losses}</div>
+          <div class="text-white/60 text-sm tracking-wider">DÉFAITES</div>
+        </div>
+      </div>
+
+      <!-- Historique des matchs -->
+      <div>
+        <h3 class="text-xl font-light tracking-wider text-white/90 mb-4">DERNIERS MATCHS</h3>
+        <div class="space-y-2">
+          ${user.matchHistory.map(match => `
+            <div class="glass-morphism p-4 rounded flex items-center justify-between">
+              <div class="flex items-center gap-4">
+                <div class="text-xl ${match.result === 'win' ? 'text-green-400' : 'text-red-400'}">
+                  ${match.result === 'win' ? '✓' : '×'}
+                </div>
+                <div>
+                  <div class="text-white/90">vs ${match.opponent}</div>
+                  <div class="text-white/60 text-sm">${match.score}</div>
+                </div>
+              </div>
+              <div class="text-white/40 text-sm">${new Date(match.date).toLocaleDateString()}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
     </div>
   `;
 
-  // clic sur le bouton Discuter depuis le profil
+  // Event listeners
   container.querySelector('#dm-button')?.addEventListener('click', () => {
-    localStorage.setItem('dmTarget', user.id);
     window.location.hash = '#live-chat';
+  });
+  
+  container.querySelector('#challenge-button')?.addEventListener('click', () => {
+    window.location.hash = '#game-modes';
   });
 }
 
 type Profile = {
   id: string;
-  authUserId: string;
-  avatar: string | null;
   displayName: string;
+  avatar: string | null;
+  rank: number;
+  wins: number;
+  losses: number;
+  totalMatches: number;
+  matchHistory: MatchHistory[];
   lastActivity: string;
+};
+
+type MatchHistory = {
+  opponent: string;
+  result: 'win' | 'loss';
+  score: string;
+  date: string;
 };
 
 // Point d'entrée pour la page Profil
 export async function initProfilePage() {
-  // Récupère le container
   const container = document.getElementById('profile-container');
   if (!container) return;
-  console.log('Initializing profile page');
-
-  const id = window.location.hash.split('/')[1] || null;
-  const url = id
-    ? `http://localhost:3000/api/v1/user/${id}`
-    : 'http://localhost:3000/api/v1/user/me';
-  const res = await fetch(url, {
-    credentials: 'include',
-  });
-  if (!res.ok) {
-    // TODO: Redirect to error page
-    console.error('Failed to fetch profile:', res.statusText);
-    return;
-  }
-  const profile: Profile = await res.json();
+  
+  // Profil de démonstration
+  const mockProfile: Profile = {
+    id: "demo-123",
+    displayName: "CyberPong42",
+    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=CyberPong42",
+    rank: 42,
+    wins: 157,
+    losses: 43,
+    totalMatches: 200,
+    matchHistory: [
+      {
+        opponent: "PongMaster",
+        result: "win",
+        score: "11-7",
+        date: "2025-09-01"
+      },
+      {
+        opponent: "PixelWarrior",
+        result: "win",
+        score: "11-5",
+        date: "2025-08-31"
+      },
+      {
+        opponent: "NeonSlayer",
+        result: "win",
+        score: "11-9",
+        date: "2025-08-30"
+      }
+    ],
+    lastActivity: "2025-09-01T12:00:00Z"
+  };
 
   // affiche le profil
-  renderProfile(container, profile, false);
+  renderProfile(container, mockProfile);
 }
