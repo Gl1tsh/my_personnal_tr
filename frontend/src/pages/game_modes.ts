@@ -1,6 +1,7 @@
 // src/pages/game_modes.ts
 import { setGameMode } from '../game/gameState';
 import { initGame } from '../game/game';
+import { TournamentPage } from './tournament';
 
 export function initGameModesPage() {
     const content = `
@@ -75,9 +76,21 @@ export function initGameModesPage() {
 
     if (tournamentButton) {
         tournamentButton.addEventListener('click', () => {
-            // Set game mode to tournament (pas encore implémenté)
             setGameMode('tournament');
-            alert('Le mode tournoi sera bientôt disponible !');
+            window.history.pushState(null, '', '#tournament');
+            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+            
+            // Create tournament section if it doesn't exist
+            let tournamentSection = document.getElementById('tournament');
+            if (!tournamentSection) {
+                tournamentSection = document.createElement('section');
+                tournamentSection.id = 'tournament';
+                tournamentSection.className = 'page';
+                const tournamentPage = new TournamentPage();
+                tournamentSection.appendChild(tournamentPage.getContainer());
+                main?.appendChild(tournamentSection);
+            }
+            tournamentSection.classList.remove('hidden');
         });
     }
 }
