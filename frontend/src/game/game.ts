@@ -1,4 +1,5 @@
 // src/game.ts
+import { getGameMode } from './gameState';
 
 // ==================== Types pour organiser les données ====================
 interface Paddle {
@@ -143,16 +144,36 @@ function update() {
 // Lancer le jeu
 function startGame() {
   if (!gameRunning) {
+    const mode = getGameMode();
+    if (!mode) {
+      console.error('Mode de jeu non défini');
+      return;
+    }
+
     resetGameState(); // Reset complet (scores, positions, botDelay)
     gameRunning = true;
     gamePaused = false;
     const messageElement = document.getElementById('gameMessageWinOrLose') as HTMLDivElement;
     messageElement.classList.add('hidden');
-    console.log('Jeu démarré, délai bot:', botDelay);
+
+    // Configurer le jeu selon le mode
+    if (mode === 'solo') {
+      console.log('Mode solo démarré, délai bot:', botDelay);
+      // Le bot est déjà configuré par défaut
+    } else if (mode === '1v1') {
+      // À implémenter plus tard
+      console.log('Mode 1v1 pas encore implémenté');
+      return;
+    } else if (mode === 'tournament') {
+      // À implémenter plus tard
+      console.log('Mode tournoi pas encore implémenté');
+      return;
+    }
+
     update();
     (document.getElementById('startGameButton') as HTMLButtonElement).disabled = true;
-    (document.getElementById('pauseGameButton') as HTMLButtonElement).disabled = false; // Réactiver "Pause"
-    messageElement.classList.remove('text-green-400', 'text-red-400'); // Enlever les couleurs au relance
+    (document.getElementById('pauseGameButton') as HTMLButtonElement).disabled = false;
+    messageElement.classList.remove('text-green-400', 'text-red-400');
   }
 }
 

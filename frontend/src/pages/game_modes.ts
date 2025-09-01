@@ -1,4 +1,6 @@
 // src/pages/game_modes.ts
+import { setGameMode } from '../game/gameState';
+import { initGame } from '../game/game';
 
 export function initGameModesPage() {
     const content = `
@@ -33,37 +35,32 @@ export function initGameModesPage() {
 
     if (soloButton) {
         soloButton.addEventListener('click', () => {
-            // Navigate to game page with solo mode
+            // Set game mode to solo and navigate
+            setGameMode('solo');
             window.history.pushState(null, '', '#game');
             const gameSection = document.getElementById('game');
             if (gameSection) {
                 document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
                 gameSection.classList.remove('hidden');
+                // Initialize game but don't start automatically
+                initGame();
             }
         });
     }
 
     if (vsButton) {
         vsButton.addEventListener('click', () => {
-            // Navigate to game page with 1v1 mode
-            window.history.pushState(null, '', '#game');
-            const gameSection = document.getElementById('game');
-            if (gameSection) {
-                document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
-                gameSection.classList.remove('hidden');
-            }
+            // Set game mode to 1v1 (pas encore implémenté)
+            setGameMode('1v1');
+            alert('Le mode 1v1 sera bientôt disponible !');
         });
     }
 
     if (tournamentButton) {
         tournamentButton.addEventListener('click', () => {
-            // Navigate to game page with tournament mode
-            window.history.pushState(null, '', '#game');
-            const gameSection = document.getElementById('game');
-            if (gameSection) {
-                document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
-                gameSection.classList.remove('hidden');
-            }
+            // Set game mode to tournament (pas encore implémenté)
+            setGameMode('tournament');
+            alert('Le mode tournoi sera bientôt disponible !');
         });
     }
 }
