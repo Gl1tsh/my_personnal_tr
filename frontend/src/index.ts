@@ -5,10 +5,12 @@ import './style.css';
 import { AudioManager } from './audio/AudioManager';
 import { EntranceScreen } from './entrance/EntranceScreen';
 import { initGame, cleanupGame } from './game/game';
-import { initHomePage } from './pages/home.js';
+import { initHomePage } from './pages/home';
 import { initChatPage } from './pages/livechat.js';
 import { initLoginPage } from './pages/login.js';
 import { initSignupPage } from './pages/signup.js';
+import { initGameModesPage } from './pages/game_modes';
+import { initProfilePage } from './pages/profile';
 
 // Expose startPong() to window
 declare global {
@@ -22,6 +24,7 @@ export {}; // Force TS module mode
 const pages = [
   'home',
   'game',
+  'game-modes',
   'live-chat',
   'board',
   'room',
@@ -48,6 +51,8 @@ function initPages() {
   initChatPage();
   initLoginPage();
   initSignupPage();
+  initGameModesPage();
+  initProfilePage();
 }
 
 // Handle navbar clicks
@@ -78,22 +83,21 @@ export function navigateTo(page: string, push = true) {
     window.history.pushState(null, '', `#${page}`);
   }
   showPage(page.split('/')[0]);
-  // Specific initialization for game page
-  if (page.split('/')[0] === 'game') {
+  // Specific initialization for different pages
+  const currentPage = page.split('/')[0];
+  if (currentPage === 'game') {
     initGame(); // Initialize game when navigating to #game
   } else {
     cleanupGame(); // Stop game when leaving #game
+  }
+  
+  if (currentPage === 'profile') {
+    initProfilePage(); // Initialize profile when navigating to #profile
   }
 }
 
 // App startup
 window.addEventListener('DOMContentLoaded', () => {
-  // Initialize all pages
-  initPages();
-
-  // Initialize navigation
-  initNav();
-
   // Initialize audio manager
   const audioManager = AudioManager.getInstance();
 
@@ -102,10 +106,13 @@ window.addEventListener('DOMContentLoaded', () => {
     await audioManager.playMusic();
   });
 
-  // Initial page based on hash or home
-  const hash = window.location.hash.substring(1);
-  const first = hash !== '' ? hash : 'home';
-  navigateTo(first);
+  // Initialize all pages
+  initPages();
+
+  // Initialize navigation
+  initNav();
+
+  // Note: navigateTo is now called by EntranceScreen after the entrance animation
 });
 
 // Replace window.startPong
