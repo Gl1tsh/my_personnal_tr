@@ -11,7 +11,8 @@ export function initGameModesPage() {
                 <h1 class="text-4xl font-extralight tracking-wider text-center text-white/90 mb-12">SELECT GAME MODE</h1>
                 <div class="space-y-6">
                     <button id="solo-mode" class="glass-button w-full py-6 text-xl tracking-wider">SOLO</button>
-                    <button id="vs-mode" class="glass-button w-full py-6 text-xl tracking-wider">1 VS 1</button>
+                    <button id="vs-local-mode" class="glass-button w-full py-6 text-xl tracking-wider">1 VS 1 (LOCAL)</button>
+                    <button id="vs-remote-mode" class="glass-button w-full py-6 text-xl tracking-wider">1 VS 1 (ONLINE)</button>
                     <button id="tournament-mode" class="glass-button w-full py-6 text-xl tracking-wider">TOURNAMENT</button>
                 </div>
             </div>
@@ -30,7 +31,8 @@ export function initGameModesPage() {
 
     // Event listeners for the buttons
     const soloButton = document.getElementById('solo-mode');
-    const vsButton = document.getElementById('vs-mode');
+    const vsLocalButton = document.getElementById('vs-local-mode');
+    const vsRemoteButton = document.getElementById('vs-remote-mode');
     const tournamentButton = document.getElementById('tournament-mode');
 
     if (soloButton) {
@@ -48,11 +50,26 @@ export function initGameModesPage() {
         });
     }
 
-    if (vsButton) {
-        vsButton.addEventListener('click', () => {
-            // Set game mode to 1v1 (pas encore implémenté)
-            setGameMode('1v1');
-            alert('Le mode 1v1 sera bientôt disponible !');
+    if (vsLocalButton) {
+        vsLocalButton.addEventListener('click', () => {
+            // Set game mode to 1v1 local
+            setGameMode('1v1-local');
+            window.history.pushState(null, '', '#game');
+            const gameSection = document.getElementById('game');
+            if (gameSection) {
+                document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+                gameSection.classList.remove('hidden');
+                // Initialize game but don't start automatically
+                initGame();
+            }
+        });
+    }
+
+    if (vsRemoteButton) {
+        vsRemoteButton.addEventListener('click', () => {
+            // Set game mode to 1v1 remote (pas encore implémenté)
+            setGameMode('1v1-remote');
+            alert('Le mode 1v1 en ligne sera bientôt disponible !');
         });
     }
 

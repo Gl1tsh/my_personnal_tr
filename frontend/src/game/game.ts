@@ -70,6 +70,19 @@ function draw() {
   ctx.fillText(rightPaddle.score.toString(), SCORE_RIGHT_X, 50);
 }
 
+// Mettre à jour le texte d'instructions selon le mode
+function updateInstructions() {
+  const messageElement = document.querySelector('.tracking-wider.font-light') as HTMLParagraphElement;
+  if (messageElement) {
+    const mode = getGameMode();
+    if (mode === 'solo') {
+      messageElement.innerHTML = 'Utilisez W/S pour déplacer votre paddle';
+    } else if (mode === '1v1-local') {
+      messageElement.innerHTML = 'Joueur 1: W/S &nbsp;&nbsp;|&nbsp;&nbsp; Joueur 2: ↑/↓';
+    }
+  }
+}
+
 // Initialiser le jeu
 export function initGame() {
   if (!canvas || !ctx) {
@@ -78,6 +91,7 @@ export function initGame() {
   }
   resetGameState();
   draw();
+  updateInstructions(); // Mettre à jour les instructions dès l'initialisation
   const startButton = document.getElementById('startGameButton') as HTMLButtonElement;
   startButton.addEventListener('click', startGame);
   const pauseButton = document.getElementById('pauseGameButton') as HTMLButtonElement;
@@ -88,10 +102,19 @@ export function initGame() {
 
 // Gérer les touches du joueur
 function handleInput() {
+  // Contrôles du joueur 1 (toujours actifs)
   if (keys.has('w') && leftPaddle.y > 0)
     leftPaddle.y -= PADDLE_SPEED;
   if (keys.has('s') && leftPaddle.y < PADDLE_MAX_Y)
     leftPaddle.y += PADDLE_SPEED;
+
+  // Contrôles du joueur 2 (uniquement en mode 1v1 local)
+  if (getGameMode() === '1v1-local') {
+    if (keys.has('ArrowUp') && rightPaddle.y > 0)
+      rightPaddle.y -= PADDLE_SPEED;
+    if (keys.has('ArrowDown') && rightPaddle.y < PADDLE_MAX_Y)
+      rightPaddle.y += PADDLE_SPEED;
+  }
 }
 
 
@@ -159,10 +182,14 @@ function startGame() {
     // Configurer le jeu selon le mode
     if (mode === 'solo') {
       console.log('Mode solo démarré, délai bot:', botDelay);
-      // Le bot est déjà configuré par défaut
-    } else if (mode === '1v1') {
+      isBotEnabled = true;
+    } else if (mode === '1v1-local') {
+      console.log('Mode 1v1 local démarré');
+      // Désactiver le bot pour le mode 1v1 local
+      isBotEnabled = false;
+    } else if (mode === '1v1-remote') {
       // À implémenter plus tard
-      console.log('Mode 1v1 pas encore implémenté');
+      console.log('Mode 1v1 remote pas encore implémenté');
       return;
     } else if (mode === 'tournament') {
       // À implémenter plus tard
@@ -266,8 +293,10 @@ function endGame() {
 
 // ==================== BOT ====================
 // Faire bouger le bot
+let isBotEnabled = true;
+
 function moveBot() {
-  if (!gameRunning || gamePaused)
+  if (!gameRunning || gamePaused || !isBotEnabled)
     return;
 
   // Position cible : centre du paddle aligné avec la balle

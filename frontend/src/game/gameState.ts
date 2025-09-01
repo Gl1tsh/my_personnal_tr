@@ -1,6 +1,6 @@
 // src/game/gameState.ts
 
-export type GameMode = 'solo' | '1v1' | 'tournament';
+export type GameMode = 'solo' | '1v1-local' | '1v1-remote' | 'tournament';
 
 export let currentGameMode: GameMode | null = null;
 
