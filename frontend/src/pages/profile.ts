@@ -71,6 +71,9 @@ function renderProfile(container: HTMLElement, user: Profile) {
               <button id="edit-profile-btn" class="glass-button text-sm">
                 ✏️ MODIFIER
               </button>
+              <button id="logout-btn" class="glass-button text-sm bg-red-500/20 hover:bg-red-500/30">
+                🚪 DÉCONNEXION
+              </button>
             </div>
             <div class="flex gap-4">
               <button id="dm-button" class="glass-button">
@@ -164,11 +167,23 @@ function renderProfile(container: HTMLElement, user: Profile) {
 
   // Event listeners pour l'édition
   const editBtn = container.querySelector('#edit-profile-btn') as HTMLButtonElement;
+  const logoutBtn = container.querySelector('#logout-btn') as HTMLButtonElement;
   const modal = container.querySelector('#edit-modal') as HTMLDivElement;
   const form = container.querySelector('#edit-profile-form') as HTMLFormElement;
   const cancelBtn = container.querySelector('#cancel-edit') as HTMLButtonElement;
   const avatarImg = container.querySelector('#profile-avatar') as HTMLImageElement;
   const displayNameEl = container.querySelector('#display-name') as HTMLHeadingElement;
+
+  // Bouton de déconnexion
+  logoutBtn.addEventListener('click', () => {
+    if (confirm('Êtes-vous sûr de vouloir vous déconnecter et supprimer votre profil local ?')) {
+      localStorage.removeItem('userProfile');
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('blockedUsers');
+      alert('Déconnexion réussie !');
+      window.location.hash = '#login';
+    }
+  });
 
   // Ouvrir le modal d'édition
   editBtn.addEventListener('click', () => {
@@ -212,7 +227,9 @@ function renderProfile(container: HTMLElement, user: Profile) {
     
     // Mettre à jour l'affichage
     displayNameEl.textContent = newProfile.displayName;
-    avatarImg.src = newProfile.avatar;
+    if (newProfile.avatar) {
+      avatarImg.src = newProfile.avatar;
+    }
     
     // Fermer le modal
     modal.classList.add('hidden');
