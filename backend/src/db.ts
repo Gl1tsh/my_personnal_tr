@@ -15,7 +15,8 @@ export function initDb(): void {
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name VARCHAR(128) NOT NULL,
-        login VARCHAR(255) NOT NULL,
+        login VARCHAR(255) NOT NULL UNIQUE,
+        email VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(128) NOT NULL,
         rank INTEGER,
         avatar BLOB

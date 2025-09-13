@@ -18,7 +18,7 @@ export function initLoginPage() {
     const { identifier, password } = Object.fromEntries(formData.entries());
 
     try {
-      const response = await fetch('http://localhost:3000/api/v1/auth/login', {
+      const response = await fetch('http://localhost:3000/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -27,16 +27,37 @@ export function initLoginPage() {
         credentials: 'include',
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Login failed');
+        alert('Erreur: ' + result.error);
+        return;
       }
 
-      const result = await response.json();
-      console.log('Login successful:', result);
-      // Redirection ou autre action après le login réussi
+      console.log('✅ Connexion réussie:', result);
+      
+      // Sauvegarder les infos utilisateur
+      localStorage.setItem('currentUser', JSON.stringify(result.user));
+      
+      // Créer/mettre à jour le profil avec les données de l'utilisateur
+      const userProfile = {
+        id: result.user.id,
+        displayName: result.user.name,
+        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${result.user.name}`,
+        rank: 1,
+        wins: 0,
+        losses: 0,
+        totalMatches: 0,
+        matchHistory: [],
+        lastActivity: new Date().toISOString()
+      };
+      localStorage.setItem('userProfile', JSON.stringify(userProfile));
+
+      alert('Connexion réussie !');
       window.location.hash = '#live-chat';
     } catch (error) {
       console.error('Error during login:', error);
+      alert('Erreur de connexion au serveur');
     }
   };
 }
