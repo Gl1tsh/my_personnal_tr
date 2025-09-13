@@ -123,15 +123,72 @@
             </div>
         </section>
 
-<!-- ================================== Profil page ================================== -->
+<!-- ================================== PROFIL PAGE ================================== -->
         <section id="profile" class="page hidden">
             <div class="container">
-                <div class="card" style="max-width: 600px; margin: 0 auto;">
-                    <div class="card-header text-center">
-                        <h1 class="card-title">User Profile</h1>
-                        <p class="card-description">Manage your account settings</p>
+                <div style="max-width: 600px; margin: 0 auto;">
+                    
+                    <!-- Profile Header -->
+                    <div class="card mb-lg">
+                        <div class="flex items-center gap-lg">
+                            <!-- Avatar -->
+                            <div style="width: 80px; height: 80px; background: var(--accent-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: var(--text-2xl); font-weight: bold; color: white;"> U </div>
+                            
+                            <!-- User Info -->
+                            <div class="flex-1">
+                                <h1 class="text-2xl font-semibold" id="profile-username">Username</h1>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col gap-sm">
+                                <button class="btn btn-primary btn-sm">Discuter</button>
+                                <button class="btn btn-secondary btn-sm">Changer Pseudo</button>
+                            </div>
+                        </div>
                     </div>
-                    <div id="profile-container"></div>
+
+                    <!-- Stats -->
+                    <div class="grid grid-2 gap-lg mb-lg">
+                        <div class="card text-center">
+                            <div class="text-3xl font-bold mb-sm" style="color: var(--accent-success);" id="wins">0</div>
+                            <div class="text-sm text-secondary">Victoires</div>
+                        </div>
+                        <div class="card text-center">
+                            <div class="text-3xl font-bold mb-sm" style="color: var(--accent-danger);" id="losses">0</div>
+                            <div class="text-sm text-secondary">Défaites</div>
+                        </div>
+                    </div>
+
+                    <!-- Game History (temporaire) -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Historique des Parties</h2>
+                        </div>
+                        <div id="game-history" class="space-y-sm">
+                            <div class="flex justify-between items-center p-sm" style="background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                                <div>
+                                    <div class="text-sm font-medium">vs IA</div>
+                                    <div class="text-xs text-muted">Il y a 2h</div>
+                                </div>
+                                <span class="text-sm font-medium" style="color: var(--accent-success);">Victoire</span>
+                            </div>
+                            <div class="flex justify-between items-center p-sm" style="background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                                <div>
+                                    <div class="text-sm font-medium">vs Joueur</div>
+                                    <div class="text-xs text-muted">Il y a 1 jour</div>
+                                </div>
+                                <span class="text-sm font-medium" style="color: var(--accent-danger);">Défaite</span>
+                            </div>
+                            <div class="flex justify-between items-center p-sm" style="background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                                <div>
+                                    <div class="text-sm font-medium">vs IA</div>
+                                    <div class="text-xs text-muted">Il y a 3 jours</div>
+                                </div>
+                                <span class="text-sm font-medium" style="color: var(--accent-success);">Victoire</span>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
             </div>
         </section>
