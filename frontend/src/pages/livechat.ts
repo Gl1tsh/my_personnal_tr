@@ -81,8 +81,8 @@ export function initChatPage() {
     const text = event.detail.text;
     let target;
 
-    // Ignorer nos propres messages (déjà ajoutés localement)
-    if (from === socket.id) return;
+    // Ignorer nos propres messages pour éviter la duplication
+    if (event.detail.originalFrom === socket.id) return;
 
     if (to == '') {
       target = '';
@@ -92,6 +92,10 @@ export function initChatPage() {
       target = from;
     }
 
+    if (!history[target]) {
+      history[target] = [];
+    }
+
     history[target].push({ from, text });
     if (target === current)
       render();
@@ -99,24 +103,28 @@ export function initChatPage() {
 
   window.addEventListener('user_list', (event: any) => {
     userList.innerHTML = '';
-    for (const user of event.detail) {
+    for (const userInfo of event.detail) {
+      // userInfo contient maintenant {id: string, username: string}
       // Ne pas afficher notre propre socket ID dans la liste
-      if (user === socket.id) continue;
+      if (userInfo.id === socket.id) continue;
       
       const ul = document.createElement('div');
       ul.className = 'p-2 hover:bg-gray-700 cursor-pointer rounded';
-      ul.textContent = user;
-      //ul.innerHTML = `${user} <span>CHAT</span>`;
+      ul.textContent = userInfo.username;
+      
       const chatButton = document.createElement('span');
-      chatButton.textContent = "💬";
+      chatButton.textContent = " 💬";
+      chatButton.className = 'ml-2 text-blue-400 hover:text-blue-300 cursor-pointer';
       ul.appendChild(chatButton);
+      
       chatButton.onclick = (e) => {
         e.stopPropagation();
-        createDmTab(user);
-        switchTo(user);
+        createDmTab(userInfo.id, userInfo.username);
+        switchTo(userInfo.id);
       };
+      
       ul.onclick = () => {
-        localStorage.setItem('dmTarget', user);
+        localStorage.setItem('dmTarget', userInfo.id);
         window.location.hash = '#profile';
       };
       userList.appendChild(ul);
@@ -141,15 +149,15 @@ export function initChatPage() {
     render();
   }
 
-  function createDmTab(name: string) {
-    if (dmList.querySelector(`#dm-tab-${name}`)) return;
+  function createDmTab(id: string, displayName?: string) {
+    if (dmList.querySelector(`#dm-tab-${id}`)) return;
     const tab = document.createElement('div');
     tab.className = 'p-2 hover:bg-gray-700 cursor-pointer rounded';
-    tab.id = `dm-tab-${name}`;
-    tab.textContent = name;
-    tab.onclick = () => switchTo(name);
+    tab.id = `dm-tab-${id}`;
+    tab.textContent = displayName || id;
+    tab.onclick = () => switchTo(id);
     dmList.appendChild(tab);
-    history[name] = [];
+    history[id] = [];
   }
 
   function switchTo(name: string) {

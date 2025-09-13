@@ -2,8 +2,8 @@
 
 import { io } from 'socket.io-client';
 
-// 1) On force la connexion vers le stub Socket.IO sur http://localhost:3001
-export const socket = io('http://localhost:3001', {
+// 1) On force la connexion vers le stub Socket.IO sur http://localhost:3000
+export const socket = io('http://localhost:3000', {
   transports: ['websocket', 'polling'], // Permet fallback
   timeout: 20000,
   forceNew: true  // Force une nouvelle connexion
@@ -19,6 +19,9 @@ socket.on('connect', () => {
     const profile = JSON.parse(userProfile);
     socket.emit('set_username', profile.displayName);
     console.log('👤 Pseudo envoyé au serveur:', profile.displayName);
+  } else {
+    // Pseudo par défaut si pas de profil
+    socket.emit('set_username', `User_${socket.id?.substring(0, 6) || 'Unknown'}`);
   }
 });
 
@@ -34,6 +37,23 @@ socket.on('user_list', (data: any) => {
   console.log('📡 user_list :', data);
   // On redispatche un event global comme avant
   window.dispatchEvent(new CustomEvent('user_list', { detail: data }));
+});
+
+// Gestion de la déconnexion
+socket.on('disconnect', (reason: string) => {
+  console.log('🔌 Socket.IO déconnecté :', reason);
+});
+
+// Gestion de la reconnexion
+socket.on('reconnect', (attemptNumber: number) => {
+  console.log('🔄 Socket.IO reconnecté :', attemptNumber);
+  // Renvoyer le pseudo après reconnexion
+  const userProfile = localStorage.getItem('userProfile');
+  if (userProfile) {
+    const profile = JSON.parse(userProfile);
+    socket.emit('set_username', profile.displayName);
+    console.log('👤 Pseudo renvoyé après reconnexion:', profile.displayName);
+  }
 });
 
 // 4) Utility pour envoyer un message

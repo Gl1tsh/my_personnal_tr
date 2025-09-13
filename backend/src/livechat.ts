@@ -29,16 +29,22 @@ io.on("connection", (socket) => {
   socket.on("message_frontend_to_backend", (msg: any) => {
     console.log("← message_frontend_to_backend:", msg);
 
-    // Remplacer l'ID socket par le vrai pseudo
+    // Remplacer l'ID socket par le vrai pseudo mais garder l'original pour éviter la duplication
     const messageWithUsername = {
       ...msg,
-      from: usernames.get(msg.from) || msg.from
+      from: usernames.get(msg.from) || msg.from,
+      originalFrom: msg.from // Garder l'ID original pour éviter la duplication côté client
     };
 
     if (msg.to != '') {
-      clients.get(msg.to)?.emit("message_backend_to_frontend", messageWithUsername);
+      // Message privé - envoyer seulement au destinataire
+      const targetSocket = clients.get(msg.to);
+      if (targetSocket) {
+        targetSocket.emit("message_backend_to_frontend", messageWithUsername);
+      }
     }
     else {
+      // Message général - envoyer à tous les clients connectés
       for (const clientSocket of clients.values()) {
         clientSocket.emit("message_backend_to_frontend", messageWithUsername);
       }
@@ -54,12 +60,17 @@ io.on("connection", (socket) => {
 });
 
 function broadcastUserList() {
-  // Envoyer la liste des socket IDs (format simple)
+  // Envoyer la liste des utilisateurs avec leurs vrais pseudos
+  const userListWithNames = Array.from(clients.keys()).map(socketId => ({
+    id: socketId,
+    username: usernames.get(socketId) || `User_${socketId.substring(0, 6)}`
+  }));
+  
   for (const clientSocket of clients.values()) {
-    clientSocket.emit("user_list", Array.from(clients.keys()));
+    clientSocket.emit("user_list", userListWithNames);
   }
 }
 
-httpServer.listen(3001, () =>
-  console.log("🚀 Stub WS listening on http://localhost:3001")
+httpServer.listen(3000, () =>
+  console.log("🚀 Stub WS listening on http://localhost:3000")
 );
