@@ -1,55 +1,60 @@
-// src/pages/home.ts
+// src/pages/home.ts - Clean version
 export function initHomePage() {
-    const content = `
-        <div class="flex flex-col mt-16">
-            <div class="mb-12 relative">
-                <div class="flex justify-center">
-                    <div class="relative flex items-center">
-                        <h1 class="absolute right-full mr-8 text-4xl font-light tracking-[0.2em] whitespace-nowrap glow-text">
-                            <div>
-                                <span>W</span><span>E</span><span>L</span><span>C</span><span>O</span><span>M</span><span>E</span>
-                                <span>&nbsp;</span>
-                                <span>T</span><span>O</span>
-                            </div>
-                            <div class="mt-2">
-                                <span>T</span><span>R</span><span>A</span><span>N</span><span>S</span><span>C</span><span>E</span>
-                                <span>N</span><span>D</span><span>A</span><span>N</span><span>C</span><span>E</span>
-                            </div>
-                        </h1>
-                        <img src="/assets/sphere_3.gif" alt="Transcendance Logo" class="w-[500px] h-[500px] object-contain"/>
-                    </div>
-                </div>
-            </div>
+    console.log('🏠 Initializing Home page...');
+    
+    // The home page content is now in HTML, we just need to handle the buttons
+    const chatButton = document.querySelector('[data-page="live-chat"]') as HTMLButtonElement;
+    const gameButton = document.querySelector('[data-page="game-modes"]') as HTMLButtonElement;
 
-            <div class="flex justify-center space-x-12">
-                <button data-page="live-chat" class="glass-button">LIVE CHAT</button>
-                <button data-page="game-modes" class="glass-button">PLAY GAME</button>
-                <button data-page="board" class="glass-button">LEADERBOARD</button>
-            </div>
-        </div>
-    `;
-
-    const homePage = document.getElementById('home');
-    if (homePage) {
-        homePage.innerHTML = content;
+    // Add click handlers that work with the new navigation system
+    if (chatButton) {
+        chatButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('🗨️ Navigating to chat from home');
+            navigateToPage('live-chat');
+        });
     }
 
-    // Add click handlers for the navigation buttons
-    const buttons = document.querySelectorAll('button[data-page]');
-    buttons.forEach(button => {
-        button.addEventListener('click', (e) => {
+    if (gameButton) {
+        gameButton.addEventListener('click', (e) => {
             e.preventDefault();
-            const target = button.getAttribute('data-page');
-            if (target) {
-                window.history.pushState(null, '', `#${target}`);
-                document.querySelectorAll('.page').forEach(page => 
-                    page.classList.add('hidden')
-                );
-                const targetPage = document.getElementById(target);
-                if (targetPage) {
-                    targetPage.classList.remove('hidden');
-                }
+            console.log('🎮 Navigating to game modes from home');
+            navigateToPage('game-modes');
+        });
+    }
+
+    console.log('✅ Home page initialized');
+}
+
+/**
+ * Navigate to a specific page using the modern navigation system
+ */
+function navigateToPage(pageName: string) {
+    // Update URL
+    window.history.pushState({ page: pageName }, '', `#${pageName}`);
+    
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.add('hidden');
+    });
+    
+    // Show target page
+    const targetPage = document.getElementById(pageName);
+    if (targetPage) {
+        targetPage.classList.remove('hidden');
+        
+        // Update active nav link
+        document.querySelectorAll('.nav-link').forEach(link => {
+            const linkPage = link.getAttribute('data-page');
+            if (linkPage === pageName) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
             }
         });
-    });
+        
+        console.log(`📍 Successfully navigated to: ${pageName}`);
+    } else {
+        console.error(`❌ Page not found: ${pageName}`);
+    }
 }

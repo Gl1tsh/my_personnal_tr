@@ -1,9 +1,6 @@
-// src/index.ts
+// src/index.ts - Clean and modern version
 
 import './style.css';
-
-import { AudioManager } from './audio/AudioManager';
-import { EntranceScreen } from './entrance/EntranceScreen';
 import { initGame, cleanupGame } from './game/game';
 import { initHomePage } from './pages/home';
 import { initChatPage } from './pages/livechat.js';
@@ -12,30 +9,28 @@ import { initSignupPage } from './pages/signup.js';
 import { initGameModesPage } from './pages/game_modes';
 import { initProfilePage } from './pages/profile';
 
-// Expose startPong() to window
+// Global window interface
 declare global {
   interface Window {
     startPong: () => void;
   }
 }
-export {}; // Force TS module mode
 
-// All app pages
+// Available pages
 const pages = [
   'home',
   'game',
   'game-modes',
   'live-chat',
-  'board',
-  'room',
-  'create_room',
   'login',
   'signup',
   'profile',
 ] as const;
 type Page = (typeof pages)[number];
 
-// Show requested page and hide others
+/**
+ * Show specified page and hide all others
+ */
 function showPage(page: string) {
   pages.forEach((p) => {
     const element = document.getElementById(p);
@@ -43,84 +38,146 @@ function showPage(page: string) {
       element.classList.toggle('hidden', p !== page);
     }
   });
+  
+  // Update active navigation link
+  updateActiveNavLink(page);
 }
 
-// Initialize basic pages
+/**
+ * Update active navigation link styling
+ */
+function updateActiveNavLink(activePage: string) {
+  const navLinks = document.querySelectorAll('.nav-link');
+  navLinks.forEach(link => {
+    const linkPage = link.getAttribute('data-page');
+    if (linkPage === activePage) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
+}
+
+/**
+ * Initialize all page modules
+ */
 function initPages() {
-  initHomePage();
-  initChatPage();
-  initLoginPage();
-  initSignupPage();
-  initGameModesPage();
-  initProfilePage();
+  try {
+    initHomePage();
+    initChatPage();
+    initLoginPage();
+    initSignupPage();
+    initGameModesPage();
+    initProfilePage();
+    console.log('✅ All pages initialized successfully');
+  } catch (error) {
+    console.error('❌ Error initializing pages:', error);
+  }
 }
 
-// Handle navbar clicks
-function initNav() {
+/**
+ * Setup navigation event handlers
+ */
+function initNavigation() {
   const links = document.querySelectorAll<HTMLElement>('[data-page]');
+  
   links.forEach((link) => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const target = link.dataset.page as Page;
-      if (target) {
+      if (target && pages.includes(target)) {
         navigateTo(target);
       }
     });
   });
 
-  // Handle back/forward
+  // Handle browser back/forward buttons
   window.addEventListener('popstate', () => {
     const hash = window.location.hash.slice(1) as Page;
     if (pages.includes(hash)) {
       navigateTo(hash, false);
+    } else {
+      navigateTo('home', false);
     }
   });
-}
-
-// Change page and update URL (pushState by default)
-export function navigateTo(page: string, push = true) {
-  if (push) {
-    window.history.pushState(null, '', `#${page}`);
-  }
-  showPage(page.split('/')[0]);
-  // Specific initialization for different pages
-  const currentPage = page.split('/')[0];
-  if (currentPage === 'game') {
-    initGame(); // Initialize game when navigating to #game
-  } else {
-    cleanupGame(); // Stop game when leaving #game
-  }
   
-  if (currentPage === 'profile') {
-    initProfilePage(); // Initialize profile when navigating to #profile
+  console.log('✅ Navigation initialized');
+}
+
+/**
+ * Navigate to a specific page
+ */
+export function navigateTo(page: string, updateHistory = true) {
+  if (!pages.includes(page as Page)) {
+    console.warn(`⚠️ Unknown page: ${page}, redirecting to home`);
+    page = 'home';
+  }
+
+  // Update URL if needed
+  if (updateHistory) {
+    window.history.pushState({ page }, '', `#${page}`);
+  }
+
+  // Show the target page
+  showPage(page);
+
+  // Handle page-specific initialization
+  const currentPage = page.split('/')[0];
+  
+  switch (currentPage) {
+    case 'game':
+      initGame();
+      break;
+    case 'profile':
+      initProfilePage();
+      break;
+    default:
+      cleanupGame(); // Clean up game when leaving game page
+      break;
+  }
+
+  console.log(`📍 Navigated to: ${page}`);
+}
+
+/**
+ * Application initialization
+ */
+function initApp() {
+  console.log('🚀 Initializing Transcendance...');
+  
+  try {
+    // Initialize all page modules
+    initPages();
+
+    // Setup navigation
+    initNavigation();
+
+    // Get initial page from URL or default to home
+    const initialPage = window.location.hash.slice(1) || 'home';
+    navigateTo(initialPage, false);
+
+    console.log('✅ Transcendance initialized successfully!');
+  } catch (error) {
+    console.error('❌ Failed to initialize application:', error);
   }
 }
 
-// App startup
-window.addEventListener('DOMContentLoaded', () => {
-  // Initialize audio manager
-  const audioManager = AudioManager.getInstance();
-
-  // Initialize entrance screen with audio callback
-  new EntranceScreen(async () => {
-    await audioManager.playMusic();
-  });
-
-  // Initialize all pages
-  initPages();
-
-  // Initialize navigation
-  initNav();
-
-  // Note: navigateTo is now called by EntranceScreen after the entrance animation
-});
-
-// Replace window.startPong
+// Global function for external access
 window.startPong = () => {
   const startButton = document.getElementById('startGameButton') as HTMLButtonElement;
   if (startButton) {
-    startButton.click(); // Simulate click on Start Game button
+    startButton.click();
+    console.log('🎮 Pong game started via global function');
   } else {
-    console.log('Start Game button not found');
+    console.warn('⚠️ Start game button not found');
   }
 };
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+
+export { };

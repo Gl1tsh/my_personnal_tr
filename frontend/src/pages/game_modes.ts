@@ -1,96 +1,63 @@
-// src/pages/game_modes.ts
+// src/pages/game_modes.ts - Clean version
 import { setGameMode } from '../game/gameState';
 import { initGame } from '../game/game';
-import { TournamentPage } from './tournament';
 
 export function initGameModesPage() {
-    const content = `
-    <div class="min-h-[80vh] flex flex-col items-center justify-center">
-        <div class="max-w-2xl w-full relative">
-            <div class="absolute -inset-1.5 bg-white/5 blur rounded-lg"></div>
-            <div class="relative glass-morphism p-12 rounded">
-                <h1 class="text-4xl font-extralight tracking-wider text-center text-white/90 mb-12">SELECT GAME MODE</h1>
-                <div class="space-y-6">
-                    <button id="solo-mode" class="glass-button w-full py-6 text-xl tracking-wider">SOLO</button>
-                    <button id="vs-local-mode" class="glass-button w-full py-6 text-xl tracking-wider">1 VS 1 (LOCAL)</button>
-                    <button id="vs-remote-mode" class="glass-button w-full py-6 text-xl tracking-wider">1 VS 1 (ONLINE)</button>
-                    <button id="tournament-mode" class="glass-button w-full py-6 text-xl tracking-wider">TOURNAMENT</button>
-                </div>
-            </div>
-        </div>
-    </div>`;
-
-    const gameModeSection = document.createElement('section');
-    gameModeSection.id = 'game-modes';
-    gameModeSection.className = 'page hidden';
-    gameModeSection.innerHTML = content;
-
-    const main = document.querySelector('main');
-    if (main && !main.querySelector('#game-modes')) {
-        main.appendChild(gameModeSection);
-    }
-
-    // Event listeners for the buttons
+    console.log('🎮 Initializing Game Modes page...');
+    
+    // The page content is now in HTML, we just need to handle the buttons
     const soloButton = document.getElementById('solo-mode');
     const vsLocalButton = document.getElementById('vs-local-mode');
-    const vsRemoteButton = document.getElementById('vs-remote-mode');
-    const tournamentButton = document.getElementById('tournament-mode');
 
     if (soloButton) {
         soloButton.addEventListener('click', () => {
-            // Set game mode to solo and navigate
+            console.log('🎯 Solo mode selected');
             setGameMode('solo');
-            window.history.pushState(null, '', '#game');
-            const gameSection = document.getElementById('game');
-            if (gameSection) {
-                document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
-                gameSection.classList.remove('hidden');
-                // Initialize game but don't start automatically
-                initGame();
-            }
+            navigateToGame();
         });
     }
 
     if (vsLocalButton) {
         vsLocalButton.addEventListener('click', () => {
-            // Set game mode to 1v1 local
+            console.log('🎯 1v1 Local mode selected');
             setGameMode('1v1-local');
-            window.history.pushState(null, '', '#game');
-            const gameSection = document.getElementById('game');
-            if (gameSection) {
-                document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
-                gameSection.classList.remove('hidden');
-                // Initialize game but don't start automatically
-                initGame();
-            }
+            navigateToGame();
         });
     }
 
-    if (vsRemoteButton) {
-        vsRemoteButton.addEventListener('click', () => {
-            // Set game mode to 1v1 remote (pas encore implémenté)
-            setGameMode('1v1-remote');
-            alert('Le mode 1v1 en ligne sera bientôt disponible !');
-        });
-    }
+    console.log('✅ Game Modes page initialized');
+}
 
-    if (tournamentButton) {
-        tournamentButton.addEventListener('click', () => {
-            setGameMode('tournament');
-            window.history.pushState(null, '', '#tournament');
-            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
-            
-            // Create tournament section if it doesn't exist
-            let tournamentSection = document.getElementById('tournament');
-            if (!tournamentSection) {
-                tournamentSection = document.createElement('section');
-                tournamentSection.id = 'tournament';
-                tournamentSection.className = 'page';
-                const tournamentPage = new TournamentPage();
-                tournamentSection.appendChild(tournamentPage.getContainer());
-                main?.appendChild(tournamentSection);
-            }
-            tournamentSection.classList.remove('hidden');
+/**
+ * Navigate to game page and initialize game
+ */
+function navigateToGame() {
+    // Update URL
+    window.history.pushState({ page: 'game' }, '', '#game');
+    
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.add('hidden');
+    });
+    
+    // Show game page
+    const gameSection = document.getElementById('game');
+    if (gameSection) {
+        gameSection.classList.remove('hidden');
+        
+        // Update active nav link
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
         });
+        const gameNavLink = document.querySelector('[data-page="game"]');
+        if (gameNavLink) {
+            gameNavLink.classList.add('active');
+        }
+        
+        // Initialize game
+        initGame();
+        console.log('🎮 Navigated to game page');
+    } else {
+        console.error('❌ Game section not found');
     }
 }
