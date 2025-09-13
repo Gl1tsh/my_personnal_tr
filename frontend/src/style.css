@@ -1,1 +1,20 @@
 @import "tailwindcss";
+@import "./styles/tournament.css";
+
+@layer components {
+  .glass-morphism {
+    @apply bg-black/20 backdrop-blur-xl border border-white/10 shadow-lg;
+  }
+  
+  .glass-button {
+    @apply px-8 py-3 bg-zinc-900/80 
+           text-white/90 rounded-sm border border-zinc-800
+           tracking-widest uppercase;
+  }
+
+  .input-minimal {
+    @apply w-full px-4 py-3 bg-black/20 border-b border-white/20 
+           outline-none text-white/80 text-sm tracking-wide 
+           placeholder-white/30;
+  }
+}

@@ -1,0 +1,44 @@
+/* Animations */
+@keyframes glowPulse {
+    0% {
+        opacity: 0.3;
+        text-shadow: 0 0 5px rgba(255,255,255,0.1);
+    }
+    50% {
+        opacity: 0.6;
+        text-shadow: 0 0 15px rgba(255,255,255,0.3);
+    }
+    100% {
+        opacity: 0.3;
+        text-shadow: 0 0 5px rgba(255,255,255,0.1);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(1.1);
+    }
+}
+
+/* Classes d'animation */
+.glow-text {
+    animation: glowPulse 3s infinite;
+}
+
+.glow-text span {
+    display: inline-block;
+    animation: glowPulse 3s infinite;
+}
+
+.glow-text span:nth-child(2n) { animation-delay: 0.3s; }
+.glow-text span:nth-child(3n) { animation-delay: 0.6s; }
+.glow-text span:nth-child(4n) { animation-delay: 0.9s; }
+
+.fade-out {
+    animation: fadeOut 1s forwards;
+}

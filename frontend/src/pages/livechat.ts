@@ -4,6 +4,12 @@ import { socket, sendMessageToBackend } from '../socket.js';
 type Message = { from: string; text: string };
 type History = { [user: string]: Message[] };
 
+// Fonction pour récupérer le profil utilisateur
+function getUserProfile() {
+  const saved = localStorage.getItem('userProfile');
+  return saved ? JSON.parse(saved) : null;
+}
+
 const history: History = {};
 
 export function initChatPage() {
@@ -20,9 +26,15 @@ export function initChatPage() {
   let current = '';
   history[current] = [];
 
-  // TODO: Only before real users through login
-  let username: string;
-  setTimeout(() => username = socket.id, 1000);
+  // Récupérer le nom d'utilisateur depuis le profil
+  const userProfile = getUserProfile();
+  let username: string = userProfile ? userProfile.displayName : 'Anonyme';
+  
+  // Si le profil change, mettre à jour le username
+  window.addEventListener('profileUpdated', (event: any) => {
+    username = event.detail.displayName;
+    console.log('👤 Nom d\'utilisateur mis à jour:', username);
+  });
 
   const blockedUsers = new Set<string>(JSON.parse(localStorage.getItem('blockedUsers') || '[]'));
   const saveBlocked = () => {
@@ -56,17 +68,21 @@ export function initChatPage() {
     if (!text)
       return;
     sendMessageToBackend(current, text);
-    if (current != '')
-      history[current].push({ from: username, text });
+    
+    // Ajouter notre message à l'historique (canal général ET DMs)
+    history[current].push({ from: username, text });
     input.value = '';
     render();
   };
 
-  window.addEventListener('message_backend_to_frontend', (event) => {
+  window.addEventListener('message_backend_to_frontend', (event: any) => {
     const from = event.detail.from;
     const to = event.detail.to;
     const text = event.detail.text;
     let target;
+
+    // Ignorer nos propres messages (déjà ajoutés localement)
+    if (from === socket.id) return;
 
     if (to == '') {
       target = '';
@@ -81,10 +97,12 @@ export function initChatPage() {
       render();
   });
 
-  window.addEventListener('user_list', (event) => {
+  window.addEventListener('user_list', (event: any) => {
     userList.innerHTML = '';
     for (const user of event.detail) {
-      if (user == username) continue;
+      // Ne pas afficher notre propre socket ID dans la liste
+      if (user === socket.id) continue;
+      
       const ul = document.createElement('div');
       ul.className = 'p-2 hover:bg-gray-700 cursor-pointer rounded';
       ul.textContent = user;
