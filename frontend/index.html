@@ -58,10 +58,10 @@
         <!-- Game -->
         <section id="game" class="page hidden">
             <div class="container">
-                <div class="text-center">
+                <div class="text-center" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh;">
                     <h1 class="text-3xl font-semibold mb-lg">Pong Game</h1>
-                    <div class="mb-lg">
-                        <canvas id="pongCanvas" class="game-canvas" width="800" height="600" style="max-width: 100%; height: auto;" ></canvas>
+                    <div class="mb-lg" style="display: flex; flex-direction: column; align-items: center;">
+                        <canvas id="pongCanvas" class="game-canvas" width="800" height="600" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" ></canvas>
                         <div id="gameMessageWinOrLose" class="mt-md text-xl font-medium hidden"></div>
                     </div>
                     <div class="flex justify-center gap-md">
