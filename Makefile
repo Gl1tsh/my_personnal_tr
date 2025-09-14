@@ -26,14 +26,13 @@ WHITE = \033[37m
 # └─────────────────────────────────────────────────────────────────────────────┘
 ifeq ($(OS),Windows_NT)
     RM = rmdir /S /Q
-    KILL_3001 = for /f "tokens=5" %a in ('netstat -ano ^| findstr :3001') do taskkill /F /PID %a >nul 2>&1 || echo -
-    KILL_3002 = for /f "tokens=5" %a in ('netstat -ano ^| findstr :3002') do taskkill /F /PID %a >nul 2>&1 || echo -
-    WAIT = timeout /T 2 /NOBREAK >nul
+    KILL_PORTS = powershell -ExecutionPolicy Bypass -File "kill-ports-simple.ps1"
+    WAIT = timeout /T 3 /NOBREAK >nul
 else
     RM = rm -rf
     KILL_3001 = lsof -ti:3001 | xargs kill -9 2>/dev/null || true
     KILL_3002 = lsof -ti:3002 | xargs kill -9 2>/dev/null || true
-    WAIT = sleep 2
+    WAIT = sleep 3
 endif
 
 .SILENT:
@@ -54,6 +53,7 @@ menu:
 	@echo "$(WHITE) ║  $(BOLD)2.$(RESET) $(YELLOW)Installer les dépendances$(RESET)                              $(CYAN)║$(RESET)"
 	@echo "$(WHITE) ║  $(BOLD)3.$(RESET) $(RED)Nettoyer le projet$(RESET)                                     $(CYAN)║$(RESET)"
 	@echo "$(WHITE) ║  $(BOLD)4.$(RESET) $(BLUE)Vérifier l'état des ports$(RESET)                              $(CYAN)║$(RESET)"
+	@echo "$(WHITE) ║  $(BOLD)5.$(RESET) $(RED)Vider la base de données$(RESET)                               $(CYAN)$(BOLD)║$(RESET)"
 	@echo "$(WHITE) ║  $(BOLD)0.$(RESET) $(DIM)Quitter$(RESET)                                                $(CYAN)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                            ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╠════════════════════════════════════════════════════════════╣$(RESET)"
@@ -68,8 +68,9 @@ menu:
 			2) echo ""; make install; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
 			3) echo ""; make clean; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
 			4) echo ""; make status; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
+			5) echo ""; make reset-db; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
 			0) echo "$(GREEN)$(BOLD)Au revoir ! 👋$(RESET)"; break ;; \
-			*) echo "$(RED)❌ Choix invalide ! Veuillez choisir entre 0-4.$(RESET)"; echo "" ;; \
+			*) echo "$(RED)❌ Choix invalide ! Veuillez choisir entre 0-5.$(RESET)"; echo "" ;; \
 		esac \
 	done
 
@@ -96,24 +97,6 @@ MAGENTA = \033[35m
 CYAN = \033[36m
 WHITE = \033[37m
 
-# ┌─────────────────────────────────────────────────────────────────────────────┐
-# │                         ⚙️ COMMANDES CROSS-PLATFORM                        │
-# └─────────────────────────────────────────────────────────────────────────────┘
-ifeq ($(OS),Windows_NT)
-    RM = rmdir /S /Q
-    KILL_3001 = for /f "tokens=5" %a in ('netstat -ano ^| findstr :3001') do taskkill /F /PID %a >nul 2>&1 || echo -
-    KILL_3002 = for /f "tokens=5" %a in ('netstat -ano ^| findstr :3002') do taskkill /F /PID %a >nul 2>&1 || echo -
-    WAIT = timeout /T 2 /NOBREAK >nul
-else
-    RM = rm -rf
-    KILL_3001 = lsof -ti:3001 | xargs kill -9 2>/dev/null || true
-    KILL_3002 = lsof -ti:3002 | xargs kill -9 2>/dev/null || true
-    WAIT = sleep 2
-endif
-
-.SILENT:
-.DEFAULT_GOAL := menu
-
 # ═══════════════════════════════════════════════════════════════════════════════
 #                               🎯 MENU PRINCIPAL
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -130,6 +113,7 @@ help:
 	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)2.$(RESET) $(YELLOW)$(BOLD)make install$(RESET)   $(DIM)→ Installe toutes les dépendances$(RESET)  $(CYAN)$(BOLD)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)3.$(RESET) $(RED)$(BOLD)make clean$(RESET)     $(DIM)→ Nettoyage complet du projet$(RESET)     $(CYAN)$(BOLD)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)4.$(RESET) $(BLUE)$(BOLD)make status$(RESET)    $(DIM)→ Vérifie l'état des ports$(RESET)        $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)5.$(RESET) $(RED)$(BOLD)make reset-db$(RESET)  $(DIM)→ Vider la base de données$(RESET)       $(CYAN)$(BOLD)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)Backend:$(RESET)  $(BOLD)$(BLUE)http://localhost:3001$(RESET) $(DIM)(API)$(RESET)                  $(CYAN)$(BOLD)║$(RESET)"
@@ -137,7 +121,7 @@ help:
 	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
 	@echo ""
-	@echo "$(WHITE)$(BOLD)                    Tapez votre choix (1-4): $(RESET)"
+	@echo "$(WHITE)$(BOLD)                    Tapez votre choix (1-5): $(RESET)"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #                            🚀 COMMANDES PRINCIPALES
@@ -201,8 +185,12 @@ clean:
 	@echo "$(RED)$(BOLD) ╠════════════════════════════════════════════════════════════$(RESET)"
 	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
 	@echo "$(YELLOW) ║  🔫 Libération des ports...                               $(RESET)"
+ifeq ($(OS),Windows_NT)
+	@$(KILL_PORTS) > nul 2>&1
+else
 	@$(KILL_3001) > /dev/null 2>&1
 	@$(KILL_3002) > /dev/null 2>&1
+endif
 	@$(WAIT) > /dev/null 2>&1
 	@echo "$(GREEN) ║  ✓ Port 3001 libéré                                       $(RESET)"
 	@echo "$(GREEN) ║  ✓ Port 3002 libéré                                       $(RESET)"
@@ -253,11 +241,30 @@ endif
 
 kill-ports:
 	@echo "$(DIM) 🔫 Libération des ports...$(RESET)"
+ifeq ($(OS),Windows_NT)
+	@$(KILL_PORTS)
+else
 	@$(KILL_3001)
 	@$(KILL_3002)
+endif
 	@$(WAIT)
 	@echo "$(DIM) ✓ Ports libérés$(RESET)"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 
-.PHONY: help dev install clean status kill-ports
+# Reset complet de la base de données
+reset-db: kill-ports
+	@echo ""
+	@echo "$(RED)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
+	@echo "$(RED)$(BOLD) ║                    💣 RESET BASE DE DONNÉES 💣               ║$(RESET)"
+	@echo "$(RED)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
+	@echo ""
+ifeq ($(OS),Windows_NT)
+	@if exist "$(BACK_DIR)\database.sqlite" del /Q "$(BACK_DIR)\database.sqlite" 2>nul
+else
+	@rm -f $(BACK_DIR)/database.sqlite 2>/dev/null || true
+endif
+	@echo "$(GREEN)$(BOLD) ✅ Base de données supprimée !$(RESET)"
+	@echo ""
+
+.PHONY: help dev install clean status kill-ports reset-db
