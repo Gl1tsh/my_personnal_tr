@@ -173,7 +173,7 @@ endif
 	@echo "$(CYAN)$(BOLD) ║$(RESET)             $(WHITE)$(BOLD)Appuyez sur Ctrl+C pour arrêter$(RESET)                  $(CYAN)$(BOLD)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
 	@echo ""
-	@cd $(FRONT_DIR) && npm run dev
+	@cd $(FRONT_DIR) && npm run dev || (echo "" && echo "$(YELLOW)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)" && echo "$(YELLOW)$(BOLD) ║                        👋 ARRÊT PROPRE 👋                    ║$(RESET)" && echo "$(YELLOW)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)" && echo "$(YELLOW)$(BOLD) ║                                                              ║$(RESET)" && echo "$(YELLOW)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Serveurs arrêtés correctement$(RESET)                            $(YELLOW)$(BOLD)║$(RESET)" && echo "$(YELLOW)$(BOLD) ║$(RESET)  $(CYAN)$(BOLD)⚡ Tapez 'make' pour relancer le menu$(RESET)                       $(YELLOW)$(BOLD)║$(RESET)" && echo "$(YELLOW)$(BOLD) ║                                                              ║$(RESET)" && echo "$(YELLOW)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)" && echo "")
 
 install:
 	@echo ""
