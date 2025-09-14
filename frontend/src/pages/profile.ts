@@ -1,83 +1,73 @@
 /* eslint-disable no-undef */
 // src/pages/profile.ts
 
-interface UserProfile {
-  avatarUrl: string;
-  username: string;
-  ranking: number;
-  wins: number;
-  losses: number;
-  matches: number;
+interface User {
+  id: number;
+  name: string;
+  login: string;
+  email: string;
+  rank?: number;
+  avatar?: string | null;
 }
 
-// Fonctions pour gérer le profil utilisateur
-function getUserProfile(): Profile | null {
-  const saved = localStorage.getItem('userProfile');
-  return saved ? JSON.parse(saved) : null;
-}
+// 🚫 FINI LE LOCALSTORAGE ! Tout vient de la BDD
+async function fetchUserFromDB(): Promise<User | null> {
+  const token = sessionStorage.getItem('authToken');
+  if (!token) {
+    console.log('❌ Aucun token de session');
+    return null;
+  }
 
-function saveUserProfile(profile: Profile): void {
-  localStorage.setItem('userProfile', JSON.stringify(profile));
-  // Émettre un événement pour que les autres pages soient notifiées
-  window.dispatchEvent(new CustomEvent('profileUpdated', { detail: profile }));
-}
-
-function getDefaultProfile(): Profile {
-  return {
-    id: "user-" + Date.now(),
-    displayName: "Joueur" + Math.floor(Math.random() * 1000),
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=" + Math.random(),
-    rank: Math.floor(Math.random() * 100) + 1,
-    wins: Math.floor(Math.random() * 50),
-    losses: Math.floor(Math.random() * 30),
-    totalMatches: 0,
-    matchHistory: [],
-    lastActivity: new Date().toISOString()
-  };
-}
-
-// Profil de secours si l'API ne répond pas
-const DEMO_PROFILE: UserProfile = {
-  avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=User42',
-  username: 'User42',
-  ranking: 12,
-  wins: 8,
-  losses: 3,
-  matches: 11,
-};
-
-// Récupère le profil depuis l'API ou renvoie le mode démo
-async function fetchUserProfile(): Promise<UserProfile> {
   try {
-    const res = await fetch('/api/profile');
-    if (!res.ok) throw new Error();
-    return await res.json();
-  } catch {
-    return DEMO_PROFILE;
+    const response = await fetch('http://localhost:3001/auth/profile', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      throw new Error('Session expirée ou invalide');
+    }
+
+    const result = await response.json();
+    return result.user;
+  } catch (error) {
+    console.error('❌ Erreur récupération profil:', error);
+    return null;
   }
 }
 
-// element du profil
-function renderProfile(container: HTMLElement, user: Profile) {
+// Générer un avatar par défaut si pas d'avatar en BDD
+function getDefaultAvatar(username: string): string {
+  return `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
+}
+
+// Afficher le profil avec les données de la BDD
+function renderProfile(container: HTMLElement, user: User) {
+  const avatar = user.avatar || getDefaultAvatar(user.name);
+  const rank = user.rank || 1;
+  
   container.innerHTML = `
     <div class="glass-morphism p-8 rounded-lg">
       <!-- En-tête du profil -->
       <div class="flex items-center justify-between mb-8">
         <div class="flex items-center gap-8">
-          <img id="profile-avatar" src="${user.avatar}" alt="Avatar" class="w-32 h-32 rounded-full border-4 border-white/10 shadow-lg cursor-pointer hover:opacity-80"/>
+          <img id="profile-avatar" src="${avatar}" alt="Avatar" class="w-32 h-32 rounded-full border-4 border-white/10 shadow-lg"/>
           <div>
             <div class="flex items-center gap-4 mb-4">
-              <h2 id="display-name" class="text-4xl font-light tracking-wider text-white/90">${user.displayName}</h2>
-              <button id="edit-profile-btn" class="glass-button text-sm">
-                ✏️ MODIFIER
-              </button>
+              <h2 id="display-name" class="text-4xl font-light tracking-wider text-white/90">${user.name}</h2>
               <button id="logout-btn" class="glass-button text-sm bg-red-500/20 hover:bg-red-500/30">
                 🚪 DÉCONNEXION
               </button>
             </div>
+            <div class="text-white/70 mb-2">Login: ${user.login}</div>
+            <div class="text-white/70 mb-4">Email: ${user.email}</div>
             <div class="flex gap-4">
               <button id="dm-button" class="glass-button">
-                💬 DISCUTER
+                � DISCUTER
               </button>
               <button id="challenge-button" class="glass-button">
                 ⚔️ DÉFIER
@@ -87,56 +77,18 @@ function renderProfile(container: HTMLElement, user: Profile) {
         </div>
       </div>
 
-      <!-- Modal d'édition (caché par défaut) -->
-      <div id="edit-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
-        <div class="glass-morphism p-6 rounded-lg w-96">
-          <h3 class="text-2xl font-light text-white/90 mb-6">Modifier le profil</h3>
-          <form id="edit-profile-form">
-            <div class="mb-4">
-              <label class="block text-white/70 mb-2">Nom d'utilisateur</label>
-              <input 
-                type="text" 
-                id="edit-username" 
-                value="${user.displayName}"
-                class="w-full p-3 bg-white/10 border border-white/20 rounded text-white placeholder-white/50"
-                maxlength="20"
-                required
-              />
-            </div>
-            <div class="mb-6">
-              <label class="block text-white/70 mb-2">Avatar (URL)</label>
-              <input 
-                type="url" 
-                id="edit-avatar" 
-                value="${user.avatar}"
-                class="w-full p-3 bg-white/10 border border-white/20 rounded text-white placeholder-white/50"
-                placeholder="https://exemple.com/mon-avatar.png"
-              />
-            </div>
-            <div class="flex gap-3">
-              <button type="submit" class="flex-1 glass-button">
-                💾 SAUVEGARDER
-              </button>
-              <button type="button" id="cancel-edit" class="flex-1 glass-button bg-red-500/20 hover:bg-red-500/30">
-                ❌ ANNULER
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
       <!-- Statistiques -->
       <div class="grid grid-cols-3 gap-4 mb-8">
         <div class="glass-morphism p-4 rounded text-center">
-          <div class="text-2xl font-bold text-white/90">#${user.rank}</div>
+          <div class="text-2xl font-bold text-white/90">#${rank}</div>
           <div class="text-white/60 text-sm tracking-wider">RANG</div>
         </div>
         <div class="glass-morphism p-4 rounded text-center">
-          <div class="text-2xl font-bold text-green-400">${user.wins}</div>
+          <div class="text-2xl font-bold text-green-400">0</div>
           <div class="text-white/60 text-sm tracking-wider">VICTOIRES</div>
         </div>
         <div class="glass-morphism p-4 rounded text-center">
-          <div class="text-2xl font-bold text-red-400">${user.losses}</div>
+          <div class="text-2xl font-bold text-red-400">0</div>
           <div class="text-white/60 text-sm tracking-wider">DÉFAITES</div>
         </div>
       </div>
@@ -144,101 +96,47 @@ function renderProfile(container: HTMLElement, user: Profile) {
       <!-- Historique des matchs -->
       <div>
         <h3 class="text-xl font-light tracking-wider text-white/90 mb-4">DERNIERS MATCHS</h3>
-        <div class="space-y-2">
-          ${user.matchHistory.map(match => `
-            <div class="glass-morphism p-4 rounded flex items-center justify-between">
-              <div class="flex items-center gap-4">
-                <div class="text-xl ${match.result === 'win' ? 'text-green-400' : 'text-red-400'}">
-                  ${match.result === 'win' ? '✓' : '×'}
-                </div>
-                <div>
-                  <div class="text-white/90">vs ${match.opponent}</div>
-                  <div class="text-white/60 text-sm">${match.score}</div>
-                </div>
-              </div>
-              <div class="text-white/40 text-sm">${new Date(match.date).toLocaleDateString()}</div>
-            </div>
-          `).join('')}
+        <div class="text-white/60 text-center p-4">
+          <p>🎮 Aucun match joué pour le moment</p>
+          <p class="text-sm mt-2">Lancez votre première partie pour voir vos statistiques !</p>
         </div>
       </div>
-
     </div>
   `;
 
-  // Event listeners pour l'édition
-  const editBtn = container.querySelector('#edit-profile-btn') as HTMLButtonElement;
+  // Event listeners
   const logoutBtn = container.querySelector('#logout-btn') as HTMLButtonElement;
-  const modal = container.querySelector('#edit-modal') as HTMLDivElement;
-  const form = container.querySelector('#edit-profile-form') as HTMLFormElement;
-  const cancelBtn = container.querySelector('#cancel-edit') as HTMLButtonElement;
-  const avatarImg = container.querySelector('#profile-avatar') as HTMLImageElement;
-  const displayNameEl = container.querySelector('#display-name') as HTMLHeadingElement;
-
-  // Bouton de déconnexion
-  logoutBtn.addEventListener('click', () => {
-    if (confirm('Êtes-vous sûr de vouloir vous déconnecter et supprimer votre profil local ?')) {
-      localStorage.removeItem('userProfile');
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem('blockedUsers');
+  
+  // 🚪 Bouton de déconnexion - Nettoie TOUT
+  logoutBtn.addEventListener('click', async () => {
+    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+      const token = sessionStorage.getItem('authToken');
+      
+      // Appeler l'API de déconnexion
+      if (token) {
+        try {
+          await fetch('http://localhost:3001/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+            credentials: 'include'
+          });
+        } catch (error) {
+          console.error('Erreur lors de la déconnexion:', error);
+        }
+      }
+      
+      // Nettoyer le stockage local
+      sessionStorage.removeItem('authToken');
+      localStorage.clear(); // Vider tout au cas où
+      
       alert('Déconnexion réussie !');
       window.location.hash = '#login';
     }
   });
 
-  // Ouvrir le modal d'édition
-  editBtn.addEventListener('click', () => {
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-  });
-
-  // Fermer le modal
-  cancelBtn.addEventListener('click', () => {
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-  });
-
-  // Fermer en cliquant sur le fond
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-  });
-
-  // Sauvegarder les modifications
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const usernameInput = container.querySelector('#edit-username') as HTMLInputElement;
-    const avatarInput = container.querySelector('#edit-avatar') as HTMLInputElement;
-    
-    const newProfile = {
-      ...user,
-      displayName: usernameInput.value.trim() || user.displayName,
-      avatar: avatarInput.value.trim() || user.avatar
-    };
-    
-    // Sauvegarder dans localStorage
-    saveUserProfile(newProfile);
-    
-    // Mettre à jour le pseudo sur le serveur WebSocket
-    import('../socket.js').then(({ updateUsernameOnServer }) => {
-      updateUsernameOnServer(newProfile.displayName);
-    });
-    
-    // Mettre à jour l'affichage
-    displayNameEl.textContent = newProfile.displayName;
-    if (newProfile.avatar) {
-      avatarImg.src = newProfile.avatar;
-    }
-    
-    // Fermer le modal
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    
-    console.log('✅ Profil mis à jour:', newProfile);
-  });
-
-  // Event listeners existants
+  // Autres boutons
   container.querySelector('#dm-button')?.addEventListener('click', () => {
     window.location.hash = '#live-chat';
   });
@@ -248,41 +146,41 @@ function renderProfile(container: HTMLElement, user: Profile) {
   });
 }
 
-type Profile = {
-  id: string;
-  displayName: string;
-  avatar: string | null;
-  rank: number;
-  wins: number;
-  losses: number;
-  totalMatches: number;
-  matchHistory: MatchHistory[];
-  lastActivity: string;
-};
-
-type MatchHistory = {
-  opponent: string;
-  result: 'win' | 'loss';
-  score: string;
-  date: string;
-};
-
 // Point d'entrée pour la page Profil
 export async function initProfilePage() {
-  const container = document.getElementById('profile-container');
-  if (!container) return;
+  const container = document.getElementById('profile');
+  if (!container) {
+    console.error('❌ Container profile non trouvé !');
+    return;
+  }
   
-  // Récupérer le profil sauvegardé ou créer un profil par défaut
-  let userProfile = getUserProfile();
-  if (!userProfile) {
-    userProfile = getDefaultProfile();
-    saveUserProfile(userProfile);
-    console.log('🎭 Nouveau profil créé:', userProfile.displayName);
+  // 🔄 Afficher un loading
+  container.innerHTML = `
+    <div class="glass-morphism p-8 rounded-lg text-center">
+      <div class="text-2xl font-light text-white/90 mb-4">⏳ Chargement du profil...</div>
+      <div class="text-white/60">Récupération des données depuis la base de données</div>
+    </div>
+  `;
+  
+  // 🗄️ Récupérer le profil depuis la BDD
+  const user = await fetchUserFromDB();
+  
+  if (!user) {
+    // Pas connecté ou session expirée
+    container.innerHTML = `
+      <div class="glass-morphism p-8 rounded-lg text-center">
+        <div class="text-2xl font-light text-white/90 mb-4">🔒 Accès refusé</div>
+        <div class="text-white/60 mb-6">Vous devez être connecté pour voir votre profil</div>
+        <button onclick="window.location.hash='#login'" class="glass-button">
+          Se connecter
+        </button>
+      </div>
+    `;
+    return;
   }
 
-  // Calculer les matchs totaux
-  userProfile.totalMatches = userProfile.wins + userProfile.losses;
-
-  // Afficher le profil
-  renderProfile(container, userProfile);
+  console.log('✅ Profil récupéré depuis la BDD:', user);
+  
+  // Afficher le profil avec les données de la BDD
+  renderProfile(container, user);
 }

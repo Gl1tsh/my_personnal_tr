@@ -63,32 +63,14 @@ export function initSignupPage() {
       const result = await response.json();
       console.log('✅ Utilisateur créé côté serveur:', result);
 
-      // Créer le profil utilisateur local pour l'UI (optionnel)
-      const userProfile = {
-        id: result.id,
-        displayName: username,
-        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`,
-        rank: Math.floor(Math.random() * 100) + 1,
-        wins: 0,
-        losses: 0,
-        totalMatches: 0,
-        matchHistory: [],
-        lastActivity: new Date().toISOString()
-      };
-
-      // Sauvegarder les infos utilisateur pour l'UI
-      const currentUser = {
-        id: result.id,
-        name: username,
-        login: username,
-        email: email
-      };
-
-      localStorage.setItem('userProfile', JSON.stringify(userProfile));
-      localStorage.setItem('currentUser', JSON.stringify(currentUser));
-
-      alert('Compte créé avec succès ! Vos données sont maintenant stockées en base.');
-      window.location.hash = '#profile';
+      // 🎉 NOTIFICATION DE SUCCÈS - Plus rien en localStorage !
+      alert(`🎉 Compte créé avec succès ! 
+      
+✅ Votre compte "${username}" est maintenant enregistré dans la base de données.
+➡️ Vous pouvez maintenant vous connecter.`);
+      
+      // Rediriger vers la page de connexion
+      window.location.hash = '#login';
 
     } catch (error) {
       console.error('❌ Erreur lors de l\'inscription:', error);

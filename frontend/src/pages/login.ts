@@ -2,11 +2,10 @@
 // src/pages/login.ts
 export function initLoginPage() {
   console.log('Login');
-  // Récup le formulaire de login et reset les input (champs)
+  
   const form = document.getElementById('login_form') as HTMLFormElement;
-  // form.reset();
 
-  // Bouton vers la page de creat account
+  // Bouton vers la page de création de compte
   const button_Signup = document.getElementById('button-signup');
   button_Signup?.addEventListener('click', () => {
     window.location.hash = '#signup';
@@ -18,7 +17,7 @@ export function initLoginPage() {
     const { identifier, password } = Object.fromEntries(formData.entries());
 
     try {
-      const response = await fetch('http://localhost:3000/auth/login', {
+      const response = await fetch('http://localhost:3001/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,25 +35,21 @@ export function initLoginPage() {
 
       console.log('✅ Connexion réussie:', result);
       
-      // Sauvegarder les infos utilisateur
-      localStorage.setItem('currentUser', JSON.stringify(result.user));
-      
-      // Créer/mettre à jour le profil avec les données de l'utilisateur
-      const userProfile = {
-        id: result.user.id,
-        displayName: result.user.name,
-        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${result.user.name}`,
-        rank: 1,
-        wins: 0,
-        losses: 0,
-        totalMatches: 0,
-        matchHistory: [],
-        lastActivity: new Date().toISOString()
-      };
-      localStorage.setItem('userProfile', JSON.stringify(userProfile));
+      // 🔑 SAUVEGARDER SEULEMENT LE TOKEN DE SESSION (pas de localStorage user)
+      if (result.sessionToken) {
+        sessionStorage.setItem('authToken', result.sessionToken);
+        console.log('🔐 Token de session sauvegardé');
+      }
 
-      alert('Connexion réussie !');
-      window.location.hash = '#live-chat';
+      // 🎉 Notification de succès
+      alert(`🎉 Connexion réussie ! 
+      
+✅ Bienvenue ${result.user.name} !
+➡️ Redirection vers votre profil...`);
+      
+      // Rediriger vers le profil (les données seront récupérées depuis la BDD)
+      window.location.hash = '#profile';
+      
     } catch (error) {
       console.error('Error during login:', error);
       alert('Erreur de connexion au serveur');

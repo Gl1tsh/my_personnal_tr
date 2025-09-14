@@ -2,12 +2,13 @@ import Fastify, { FastifyInstance, RouteShorthandOptions } from 'fastify'
 import { Server, IncomingMessage, ServerResponse } from 'http'
 import { initDb, getDb, closeDb } from './db'
 import * as bcrypt from 'bcrypt' // Ajoute cet import ici pour corriger l'erreur
+import fastifyCors from '@fastify/cors'
 
 const server: FastifyInstance = Fastify({})
 
 // Hook pour ajouter les headers CORS manuellement
 server.addHook('preHandler', async (request, reply) => {
-  reply.header('Access-Control-Allow-Origin', 'http://localhost:3003')
+  reply.header('Access-Control-Allow-Origin', 'http://localhost:3002')
   reply.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
   reply.header('Access-Control-Allow-Headers', 'Content-Type,Authorization')
   reply.header('Access-Control-Allow-Credentials', 'true')
@@ -189,6 +190,14 @@ const loginOpts: RouteShorthandOptions = {
   }
 }
 
+// Stockage simple des sessions (en production, utilisez Redis)
+const activeSessions: Map<string, { userId: number; login: string }> = new Map()
+
+// Générer un token de session simple
+function generateSessionToken(): string {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36)
+}
+
 server.post('/auth/login', loginOpts, async (request, reply) => {
   const db = getDb()
   const { identifier, password } = request.body as { identifier: string; password: string }
@@ -225,12 +234,113 @@ server.post('/auth/login', loginOpts, async (request, reply) => {
           email: row.email
         }
 
-        reply.status(200).send({ message: 'Connexion réussie', user })
+        // Créer une session simple (stockage en mémoire)
+        const sessionToken = generateSessionToken()
+        activeSessions.set(sessionToken, { userId: row.id, login: row.login })
+
+        // Renvoyer le token dans la réponse (côté client le stockera)
+        reply.status(200).send({ 
+          message: 'Connexion réussie', 
+          user,
+          sessionToken // Le frontend utilisera ça temporairement
+        })
       }
     )
   } catch (err) {
     reply.status(500).send({ error: (err as Error).message })
   }
+})
+
+// Route pour récupérer le profil utilisateur
+const profileOpts: RouteShorthandOptions = {
+  schema: {
+    headers: {
+      type: 'object',
+      properties: {
+        authorization: { type: 'string' }
+      },
+      required: ['authorization']
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              name: { type: 'string' },
+              login: { type: 'string' },
+              email: { type: 'string' },
+              rank: { type: 'integer', nullable: true },
+              avatar: { type: 'string', nullable: true }
+            }
+          }
+        }
+      },
+      401: {
+        type: 'object',
+        properties: {
+          error: { type: 'string' }
+        }
+      }
+    }
+  }
+}
+
+server.get('/auth/profile', profileOpts, async (request, reply) => {
+  const authHeader = request.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return reply.status(401).send({ error: 'Token manquant' })
+  }
+
+  const token = authHeader.split(' ')[1]
+  const session = activeSessions.get(token)
+  
+  if (!session) {
+    return reply.status(401).send({ error: 'Session invalide' })
+  }
+
+  const db = getDb()
+  
+  try {
+    db.get(
+      'SELECT id, name, login, email, rank, avatar FROM users WHERE id = ?',
+      [session.userId],
+      (err, row: any) => {
+        if (err) {
+          return reply.status(500).send({ error: err.message })
+        }
+
+        if (!row) {
+          return reply.status(404).send({ error: 'Utilisateur non trouvé' })
+        }
+
+        const user = {
+          id: row.id,
+          name: row.name,
+          login: row.login,
+          email: row.email,
+          rank: row.rank || 1,
+          avatar: row.avatar ? Buffer.from(row.avatar).toString('base64') : null
+        }
+
+        reply.status(200).send({ user })
+      }
+    )
+  } catch (err) {
+    reply.status(500).send({ error: (err as Error).message })
+  }
+})
+
+// Route de déconnexion
+server.post('/auth/logout', async (request, reply) => {
+  const authHeader = request.headers.authorization
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1]
+    activeSessions.delete(token)
+  }
+  reply.status(200).send({ message: 'Déconnexion réussie' })
 })
 
 const start = async () => {
