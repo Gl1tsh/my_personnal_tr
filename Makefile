@@ -1,93 +1,213 @@
-# Makefile pour ft_transcendence avec nettoyage automatique des ports
-# Backend: port 3001, Frontend: port 3002
+# ═══════════════════════════════════════════════════════════════════════════════
+#                           🚀 TRANSCENDANCE MAKEFILE 🚀
+# ═══════════════════════════════════════════════════════════════════════════════
+
+MAKEFLAGS += --no-print-directory
 
 FRONT_DIR = frontend
 BACK_DIR = backend
 
-# Couleurs pour output épuré
-RED = \033[0;31m
-GREEN = \033[0;32m
-YELLOW = \033[0;33m
-BLUE = \033[0;34m
-NC = \033[0m
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                            🎨 COULEURS & STYLES                             │
+# └─────────────────────────────────────────────────────────────────────────────┘
+BOLD = \033[1m
+DIM = \033[2m
+RESET = \033[0m
+RED = \033[31m
+GREEN = \033[32m
+YELLOW = \033[33m
+BLUE = \033[34m
+MAGENTA = \033[35m
+CYAN = \033[36m
+WHITE = \033[37m
 
-# Commandes cross-platform
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                         ⚙️ COMMANDES CROSS-PLATFORM                        │
+# └─────────────────────────────────────────────────────────────────────────────┘
 ifeq ($(OS),Windows_NT)
     RM = rmdir /S /Q
-    KILL_PORT_3001 = for /f "tokens=5" %a in ('netstat -ano ^| findstr :3001') do taskkill /F /PID %a >nul 2>&1 || echo -
-    KILL_PORT_3002 = for /f "tokens=5" %a in ('netstat -ano ^| findstr :3002') do taskkill /F /PID %a >nul 2>&1 || echo -
+    KILL_3001 = for /f "tokens=5" %a in ('netstat -ano ^| findstr :3001') do taskkill /F /PID %a >nul 2>&1 || echo -
+    KILL_3002 = for /f "tokens=5" %a in ('netstat -ano ^| findstr :3002') do taskkill /F /PID %a >nul 2>&1 || echo -
     WAIT = timeout /T 2 /NOBREAK >nul
-    START = start /B
 else
     RM = rm -rf
-    KILL_PORT_3001 = lsof -ti:3001 | xargs kill -9 2>/dev/null || true
-    KILL_PORT_3002 = lsof -ti:3002 | xargs kill -9 2>/dev/null || true
+    KILL_3001 = lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+    KILL_3002 = lsof -ti:3002 | xargs kill -9 2>/dev/null || true
     WAIT = sleep 2
-    START = nohup
 endif
 
-# Supprime écho des commandes
 .SILENT:
+.DEFAULT_GOAL := menu
 
-# Installe les dépendances npm dans frontend et backend
-install:
-	@echo "$(BLUE)📥 Installation des deps dans frontend…$(NC)"
-	@if [ -d "$(FRONT_DIR)" ]; then \
-		cd $(FRONT_DIR) && npm install && echo "$(GREEN)✅ Deps frontend ok !$(NC)"; \
-	else \
-		echo "$(RED)❌ Pas de dossier frontend !$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(BLUE)📥 Installation des deps dans backend…$(NC)"
-	@if [ -d "$(BACK_DIR)" ]; then \
-		cd $(BACK_DIR) && npm install && echo "$(GREEN)✅ Deps backend ok !$(NC)"; \
-	else \
-		echo "$(YELLOW)⚠️ Pas de dossier backend, skip.$(NC)"; \
-	fi
-	@echo "$(GREEN)🎉 Tout est prêt, lance 'make chat' !$(NC)"
+# ═══════════════════════════════════════════════════════════════════════════════
+#                            🎯 MENU INTERACTIF
+# ═══════════════════════════════════════════════════════════════════════════════
 
-# Lance tout : nettoie les ports + backend (3001) + frontend (3002)
-chat: kill-ports
-	@echo "$(BLUE)🔨 Compilation du backend…$(NC)"
-	@if [ -d "$(BACK_DIR)" ]; then \
-		cd $(BACK_DIR) && npm run build && echo "$(GREEN)✅ Backend compilé !$(NC)"; \
-	else \
-		echo "$(RED)❌ Pas de dossier backend !$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(BLUE)🚀 Démarrage du serveur backend (port 3001)…$(NC)"
+menu:
+	@echo ""
+	@echo "$(CYAN)$(BOLD) ╔════════════════════════════════════════════════════════════╗$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                    🚀 TRANSCENDANCE                        ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                  Développement Menu                        ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╠════════════════════════════════════════════════════════════╣$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                                                            ║$(RESET)"
+	@echo "$(WHITE) ║  $(BOLD)1.$(RESET) $(GREEN)Lancer l'application$(RESET)                                   $(CYAN)║$(RESET)"
+	@echo "$(WHITE) ║  $(BOLD)2.$(RESET) $(YELLOW)Installer les dépendances$(RESET)                              $(CYAN)║$(RESET)"
+	@echo "$(WHITE) ║  $(BOLD)3.$(RESET) $(RED)Nettoyer le projet$(RESET)                                     $(CYAN)║$(RESET)"
+	@echo "$(WHITE) ║  $(BOLD)4.$(RESET) $(BLUE)Vérifier l'état des ports$(RESET)                              $(CYAN)║$(RESET)"
+	@echo "$(WHITE) ║  $(BOLD)0.$(RESET) $(DIM)Quitter$(RESET)                                                $(CYAN)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                                                            ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╠════════════════════════════════════════════════════════════╣$(RESET)"
+	@echo "$(WHITE) ║  $(DIM)Backend: http://localhost:3001 (API)$(RESET)                      $(CYAN)║$(RESET)"
+	@echo "$(WHITE) ║  $(DIM)Frontend: http://localhost:3002 (App)$(RESET)                     $(CYAN)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╚════════════════════════════════════════════════════════════╝$(RESET)"
+	@echo ""
+	@while true; do \
+		read -p "Votre choix: " choice; \
+		case $$choice in \
+			1) echo ""; make dev; break ;; \
+			2) echo ""; make install; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
+			3) echo ""; make clean; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
+			4) echo ""; make status; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
+			0) echo "$(GREEN)$(BOLD)Au revoir ! 👋$(RESET)"; break ;; \
+			*) echo "$(RED)❌ Choix invalide ! Veuillez choisir entre 0-4.$(RESET)"; echo "" ;; \
+		esac \
+	done
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#                            🚀 COMMANDES PRINCIPALES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ... (rest of the original_newString content remains unchanged)
+
+FRONT_DIR = frontend
+BACK_DIR = backend
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                            🎨 COULEURS & STYLES                             │
+# └─────────────────────────────────────────────────────────────────────────────┘
+BOLD = \033[1m
+DIM = \033[2m
+RESET = \033[0m
+RED = \033[31m
+GREEN = \033[32m
+YELLOW = \033[33m
+BLUE = \033[34m
+MAGENTA = \033[35m
+CYAN = \033[36m
+WHITE = \033[37m
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                         ⚙️ COMMANDES CROSS-PLATFORM                        │
+# └─────────────────────────────────────────────────────────────────────────────┘
 ifeq ($(OS),Windows_NT)
-	@cd $(BACK_DIR) && start /B npm run server
+    RM = rmdir /S /Q
+    KILL_3001 = for /f "tokens=5" %a in ('netstat -ano ^| findstr :3001') do taskkill /F /PID %a >nul 2>&1 || echo -
+    KILL_3002 = for /f "tokens=5" %a in ('netstat -ano ^| findstr :3002') do taskkill /F /PID %a >nul 2>&1 || echo -
+    WAIT = timeout /T 2 /NOBREAK >nul
+else
+    RM = rm -rf
+    KILL_3001 = lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+    KILL_3002 = lsof -ti:3002 | xargs kill -9 2>/dev/null || true
+    WAIT = sleep 2
+endif
+
+.SILENT:
+.DEFAULT_GOAL := menu
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#                               🎯 MENU PRINCIPAL
+# ═══════════════════════════════════════════════════════════════════════════════
+
+help:
+	@echo ""
+	@echo ""
+	@echo "$(CYAN)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                        🚀 TRANSCENDANCE 🚀                   ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                      Menu de Développement                   ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)1.$(RESET) $(GREEN)$(BOLD)make dev$(RESET)       $(DIM)→ Lance l'application complète$(RESET)     $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)2.$(RESET) $(YELLOW)$(BOLD)make install$(RESET)   $(DIM)→ Installe toutes les dépendances$(RESET)  $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)3.$(RESET) $(RED)$(BOLD)make clean$(RESET)     $(DIM)→ Nettoyage complet du projet$(RESET)     $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)4.$(RESET) $(BLUE)$(BOLD)make status$(RESET)    $(DIM)→ Vérifie l'état des ports$(RESET)        $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)Backend:$(RESET)  $(BOLD)$(BLUE)http://localhost:3001$(RESET) $(DIM)(API)$(RESET)                  $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)Frontend:$(RESET) $(BOLD)$(MAGENTA)http://localhost:3002$(RESET) $(DIM)(App)$(RESET)                  $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
+	@echo ""
+	@echo "$(WHITE)$(BOLD)                    Tapez votre choix (1-4): $(RESET)"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#                            🚀 COMMANDES PRINCIPALES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+dev: kill-ports
+	@echo ""
+	@echo "$(MAGENTA)$(BOLD) ┌─────────────────────────────────────────────┐$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) │           🚀 LANCEMENT EN COURS...          │$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) └─────────────────────────────────────────────┘$(RESET)"
+	@echo ""
+	@echo "$(BLUE)$(BOLD) ⚡ Compilation du backend...$(RESET)"
+	@cd $(BACK_DIR) && npm run build > /dev/null 2>&1
+	@echo "$(GREEN) ✓ Backend compilé !$(RESET)"
+	@echo ""
+	@echo "$(BLUE)$(BOLD) � Démarrage des services...$(RESET)"
+ifeq ($(OS),Windows_NT)
+	@cd $(BACK_DIR) && start /B npm run server > /dev/null 2>&1
 else
 	@cd $(BACK_DIR) && nohup npm run server >/dev/null 2>&1 &
 endif
 	@$(WAIT)
-	@echo "$(GREEN)✅ Backend API en route sur http://localhost:3001 !$(NC)"
-	@echo "$(YELLOW)🌐 Démarrage du frontend (port 3002)…$(NC)"
-	@if [ -d "$(FRONT_DIR)" ]; then \
-		cd $(FRONT_DIR) && npm run dev; \
-	else \
-		echo "$(RED)❌ Dossier frontend manquant.$(NC)"; \
-		exit 1; \
-	fi
+	@echo "$(GREEN)$(BOLD) ✅ Backend API démarré sur port 3001$(RESET)"
+	@echo "$(YELLOW)$(BOLD) 🌐 Lancement du frontend...$(RESET)"
+	@echo ""
+	@echo "$(CYAN)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                     🎉 PRÊT À DÉVELOPPER ! 🎉                ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)🔗 Backend API:$(RESET)  $(BLUE)$(BOLD)http://localhost:3001$(RESET)                      $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(MAGENTA)$(BOLD)🌐 Frontend App:$(RESET) $(BLUE)$(BOLD)http://localhost:3002$(RESET)                      $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)             $(WHITE)$(BOLD)Appuyez sur Ctrl+C pour arrêter$(RESET)                  $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
+	@echo ""
+	@cd $(FRONT_DIR) && npm run dev
 
-# Tue tous les processus sur les ports 3001 et 3002
-kill-ports:
-	@echo "$(YELLOW)🔫 Nettoyage des ports 3001 et 3002…$(NC)"
-ifeq ($(OS),Windows_NT)
-	@$(KILL_PORT_3001)
-	@$(KILL_PORT_3002)
-else
-	@$(KILL_PORT_3001)
-	@$(KILL_PORT_3002)
-endif
-	@$(WAIT)
-	@echo "$(GREEN)✅ Ports libérés !$(NC)"
+install:
+	@echo ""
+	@echo "$(YELLOW)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
+	@echo "$(YELLOW)$(BOLD) ║                 📦 INSTALLATION DES DÉPENDANCES 📦           ║$(RESET)"
+	@echo "$(YELLOW)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
+	@echo ""
+	@echo "$(BLUE)$(BOLD) 🌐 Installation frontend...$(RESET)"
+	@cd $(FRONT_DIR) && npm install --silent
+	@echo "$(GREEN)$(BOLD) ✅ Frontend installé avec succès !$(RESET)"
+	@echo ""
+	@echo "$(BLUE)$(BOLD) ⚙️  Installation backend...$(RESET)"
+	@cd $(BACK_DIR) && npm install --silent
+	@echo "$(GREEN)$(BOLD) ✅ Backend installé avec succès !$(RESET)"
+	@echo ""
+	@echo "$(GREEN)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
+	@echo "$(GREEN)$(BOLD) ║                   🎉 INSTALLATION TERMINÉE ! 🎉              ║$(RESET)"
+	@echo "$(GREEN)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
+	@echo ""
 
-# Nettoie tout : processus + fichiers build
-clean: kill-ports
-	@echo "$(GREEN)🧹 Nettoyage complet…$(NC)"
-	@echo "$(GREEN)🗑️ Suppression des fichiers build…$(NC)"
+clean:
+	@echo ""
+	@echo "$(RED)$(BOLD) ╔════════════════════════════════════════════════════════════$(RESET)"
+	@echo "$(RED)$(BOLD) ║                    🧹 NETTOYAGE COMPLET                    $(RESET)"
+	@echo "$(RED)$(BOLD) ╠════════════════════════════════════════════════════════════$(RESET)"
+	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
+	@echo "$(YELLOW) ║  🔫 Libération des ports...                               $(RESET)"
+	@$(KILL_3001) > /dev/null 2>&1
+	@$(KILL_3002) > /dev/null 2>&1
+	@$(WAIT) > /dev/null 2>&1
+	@echo "$(GREEN) ║  ✓ Port 3001 libéré                                       $(RESET)"
+	@echo "$(GREEN) ║  ✓ Port 3002 libéré                                       $(RESET)"
+	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
+	@echo "$(YELLOW) ║  🗑️  Suppression des fichiers build...                    $(RESET)"
 ifeq ($(OS),Windows_NT)
 	@if exist "$(BACK_DIR)\dist" rmdir /S /Q "$(BACK_DIR)\dist" 2>nul
 	@if exist "$(FRONT_DIR)\dist" rmdir /S /Q "$(FRONT_DIR)\dist" 2>nul
@@ -95,11 +215,9 @@ else
 	@$(RM) $(BACK_DIR)/dist 2>/dev/null || true
 	@$(RM) $(FRONT_DIR)/dist 2>/dev/null || true
 endif
-	@echo "$(GREEN)✅ Nettoyage terminé !$(NC)"
-
-# Nettoie tout y compris node_modules (reset complet)
-fclean: clean
-	@echo "$(RED)🧨 Suppression complète (node_modules inclus)…$(NC)"
+	@echo "$(GREEN) ║  ✓ Fichiers build supprimés                               $(RESET)"
+	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
+	@echo "$(YELLOW) ║  📁 Suppression des node_modules...                       $(RESET)"
 ifeq ($(OS),Windows_NT)
 	@if exist "$(BACK_DIR)\node_modules" rmdir /S /Q "$(BACK_DIR)\node_modules" 2>nul
 	@if exist "$(FRONT_DIR)\node_modules" rmdir /S /Q "$(FRONT_DIR)\node_modules" 2>nul
@@ -107,44 +225,39 @@ else
 	@$(RM) $(BACK_DIR)/node_modules 2>/dev/null || true
 	@$(RM) $(FRONT_DIR)/node_modules 2>/dev/null || true
 endif
-	@echo "$(GREEN)✅ Reset complet terminé !$(NC)"
+	@echo "$(GREEN) ║  ✓ node_modules supprimés                                 $(RESET)"
+	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
+	@echo "$(GREEN)$(BOLD) ║                    ✨ NETTOYAGE TERMINÉ !                  $(RESET)"
+	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
+	@echo "$(RED)$(BOLD) ╚════════════════════════════════════════════════════════════$(RESET)"
 
-# Construit et lance l'application avec Docker
-docker:
-	@echo "$(BLUE)🐳 Construction de l'image Docker pour le backend…$(NC)"
-	@if [ -d "$(BACK_DIR)" ]; then \
-		cd $(BACK_DIR) && docker build -t ft_transcendence_backend . && echo "$(GREEN)✅ Image Docker construite !$(NC)"; \
-	else \
-		echo "$(RED)❌ Pas de dossier backend !$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(BLUE)🚀 Démarrage du conteneur Docker (port 3001)…$(NC)"
-	@docker run -d -p 3001:3001 --name ft_transcendence_backend ft_transcendence_backend && echo "$(GREEN)✅ Backend Docker en route !$(NC)"
-	@echo "$(YELLOW)🌐 Démarrage du frontend (port 3002)…$(NC)"
-	@if [ -d "$(FRONT_DIR)" ]; then \
-		cd $(FRONT_DIR) && npm run dev; \
-	else \
-		echo "$(RED)❌ Dossier frontend manquant.$(NC)"; \
-		exit 1; \
-	fi
-
-# Arrête et supprime les conteneurs Docker
-docker-clean:
-	@echo "$(GREEN)🧹 Nettoyage des conteneurs Docker…$(NC)"
-	@docker stop ft_transcendence_backend 2>/dev/null || true
-	@docker rm ft_transcendence_backend 2>/dev/null || true
-	@docker rmi ft_transcendence_backend 2>/dev/null || true
-	@echo "$(GREEN)✅ Conteneurs Docker nettoyés !$(NC)"
-
-# Affiche l'état des ports
 status:
-	@echo "$(BLUE)📊 État des ports 3001 et 3002…$(NC)"
+	@echo ""
+	@echo "$(BLUE)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
+	@echo "$(BLUE)$(BOLD) ║                      📊 ÉTAT DES PORTS 📊                    ║$(RESET)"
+	@echo "$(BLUE)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
+	@echo "$(BLUE)$(BOLD) ║                                                              ║$(RESET)"
 ifeq ($(OS),Windows_NT)
-	@netstat -ano | findstr :3001 || echo "Port 3001: $(GREEN)libre$(NC)"
-	@netstat -ano | findstr :3002 || echo "Port 3002: $(GREEN)libre$(NC)"
+	@netstat -ano | findstr :3001 > nul && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3001: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD)   ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3001: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
+	@netstat -ano | findstr :3002 > nul && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3002: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD)   ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3002: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
 else
-	@lsof -i:3001 || echo "Port 3001: $(GREEN)libre$(NC)"
-	@lsof -i:3002 || echo "Port 3002: $(GREEN)libre$(NC)"
+	@lsof -i:3001 > /dev/null 2>&1 && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3001: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║  $(RESET)  $(GREEN)$(BOLD)✅ Port 3001: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
+	@lsof -i:3002 > /dev/null 2>&1 && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3002: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║  $(RESET)  $(GREEN)$(BOLD)✅ Port 3002: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
 endif
+	@echo "$(BLUE)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(BLUE)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
 
-.PHONY: chat clean fclean kill-ports status docker docker-clean install
+# ═══════════════════════════════════════════════════════════════════════════════
+#                            🔧 UTILITAIRES INTERNES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+kill-ports:
+	@echo "$(DIM) 🔫 Libération des ports...$(RESET)"
+	@$(KILL_3001)
+	@$(KILL_3002)
+	@$(WAIT)
+	@echo "$(DIM) ✓ Ports libérés$(RESET)"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+
+.PHONY: help dev install clean status kill-ports
