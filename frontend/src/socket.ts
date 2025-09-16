@@ -44,6 +44,12 @@ socket.on('disconnect', (reason: string) => {
   console.log('🔌 Socket.IO déconnecté :', reason);
 });
 
+// Gestion des erreurs de connexion
+socket.on('connect_error', (error: any) => {
+  console.warn('⚠️ Erreur de connexion Socket.IO:', error.message);
+  console.info('💡 Vérifiez que le serveur Socket.IO est démarré sur http://localhost:3000');
+});
+
 // Gestion de la reconnexion
 socket.on('reconnect', (attemptNumber: number) => {
   console.log('🔄 Socket.IO reconnecté :', attemptNumber);

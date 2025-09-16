@@ -30,6 +30,7 @@ ifeq ($(OS),Windows_NT)
     WAIT = timeout /T 3 /NOBREAK >nul
 else
     RM = rm -rf
+    KILL_3000 = lsof -ti:3000 | xargs kill -9 2>/dev/null || true
     KILL_3001 = lsof -ti:3001 | xargs kill -9 2>/dev/null || true
     KILL_3002 = lsof -ti:3002 | xargs kill -9 2>/dev/null || true
     WAIT = sleep 3
@@ -126,6 +127,7 @@ help:
 	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)Backend:$(RESET)  $(BOLD)$(BLUE)http://localhost:3001$(RESET) $(DIM)(API)$(RESET)                  $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)Socket.IO:$(RESET) $(BOLD)$(BLUE)http://localhost:3000$(RESET) $(DIM)(Chat)$(RESET)                 $(CYAN)$(BOLD)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)Frontend:$(RESET) $(BOLD)$(MAGENTA)http://localhost:3002$(RESET) $(DIM)(App)$(RESET)                  $(CYAN)$(BOLD)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
@@ -152,11 +154,14 @@ endif
 	@echo "$(BLUE) 📡 Starting services...$(RESET)"
 ifeq ($(OS),Windows_NT)
 	@cd $(BACK_DIR) && start /B npm run server > /dev/null 2>&1
+	@cd $(BACK_DIR) && start /B npm run chat > /dev/null 2>&1
 else
 	@cd $(BACK_DIR) && nohup npm run server >/dev/null 2>&1 &
+	@cd $(BACK_DIR) && nohup npm run chat >/dev/null 2>&1 &
 endif
 	@$(WAIT)
 	@echo "$(GREEN)$(BOLD) ✅ Backend API démarré sur port 3001$(RESET)"
+	@echo "$(GREEN)$(BOLD) ✅ Socket.IO démarré sur port 3000$(RESET)"
 	@echo "$(YELLOW)$(BOLD) 🌐 Lancement du frontend...$(RESET)"
 	@echo ""
 	@echo "$(CYAN)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
@@ -164,6 +169,7 @@ endif
 	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)🔗 Backend API:$(RESET)  $(BLUE)$(BOLD)http://localhost:3001$(RESET)                      $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)📡 Socket.IO:$(RESET)    $(BLUE)$(BOLD)http://localhost:3000$(RESET)                      $(CYAN)$(BOLD)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(MAGENTA)$(BOLD)🌐 Frontend App:$(RESET) $(BLUE)$(BOLD)http://localhost:3002$(RESET)                      $(CYAN)$(BOLD)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║$(RESET)             $(WHITE)$(BOLD)Appuyez sur Ctrl+C pour arrêter$(RESET)                  $(CYAN)$(BOLD)║$(RESET)"
@@ -238,11 +244,13 @@ status:
 	@echo "$(BLUE)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
 	@echo "$(BLUE)$(BOLD) ║                                                              ║$(RESET)"
 ifeq ($(OS),Windows_NT)
-	@netstat -ano | findstr :3001 > nul && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3001: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD)   ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3001: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
-	@netstat -ano | findstr :3002 > nul && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3002: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD)   ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3002: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
+	@netstat -ano | findstr :3000 > nul && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3000: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3000: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
+	@netstat -ano | findstr :3001 > nul && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3001: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3001: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
+	@netstat -ano | findstr :3002 > nul && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3002: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3002: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
 else
-	@lsof -i:3001 > /dev/null 2>&1 && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3001: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║  $(RESET)  $(GREEN)$(BOLD)✅ Port 3001: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
-	@lsof -i:3002 > /dev/null 2>&1 && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3002: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║  $(RESET)  $(GREEN)$(BOLD)✅ Port 3002: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
+	@lsof -i:3000 > /dev/null 2>&1 && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3000: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3000: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
+	@lsof -i:3001 > /dev/null 2>&1 && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3001: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3001: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
+	@lsof -i:3002 > /dev/null 2>&1 && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3002: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3002: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
 endif
 	@echo "$(BLUE)$(BOLD) ║                                                              ║$(RESET)"
 	@echo "$(BLUE)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
@@ -256,6 +264,7 @@ kill-ports:
 ifeq ($(OS),Windows_NT)
 	@$(KILL_PORTS)
 else
+	@$(KILL_3000)
 	@$(KILL_3001)
 	@$(KILL_3002)
 endif
