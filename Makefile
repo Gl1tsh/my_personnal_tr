@@ -106,7 +106,16 @@ help:
 	@echo ""
 	@echo "$(CYAN)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                        🚀 TRANSCENDANCE 🚀                   ║$(RESET)"
+		@echo "$(CYAN)$(BOLD) ║                    🚀 TRANSCENDANCE 🚀                   ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                      Menu de Développement                   ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)1.$(RESET) $(GREEN)$(BOLD)make dev$(RESET)       $(DIM)→ Lance l'application$(RESET)              $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)2.$(RESET) $(YELLOW)$(BOLD)make install$(RESET)   $(DIM)→ Installe les dépendances$(RESET)         $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)3.$(RESET) $(BLUE)$(BOLD)make clean$(RESET)     $(DIM)→ Nettoyage léger (ports)$(RESET)          $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)4.$(RESET) $(RED)$(BOLD)make nuke$(RESET)      $(DIM)→ Nettoyage complet$(RESET)               $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)5.$(RESET) $(MAGENTA)$(BOLD)make status$(RESET)    $(DIM)→ État des ports$(RESET)                   $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)6.$(RESET) $(RED)$(BOLD)make reset-db$(RESET)  $(DIM)→ Reset base de données$(RESET)           $(CYAN)$(BOLD)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)1.$(RESET) $(GREEN)$(BOLD)make dev$(RESET)       $(DIM)→ Lance l'application complète$(RESET)     $(CYAN)$(BOLD)║$(RESET)"
@@ -127,17 +136,20 @@ help:
 #                            🚀 COMMANDES PRINCIPALES
 # ═══════════════════════════════════════════════════════════════════════════════
 
-dev: kill-ports
+dev: 
 	@echo ""
-	@echo "$(MAGENTA)$(BOLD) ┌─────────────────────────────────────────────┐$(RESET)"
-	@echo "$(MAGENTA)$(BOLD) │           🚀 LANCEMENT EN COURS...          │$(RESET)"
-	@echo "$(MAGENTA)$(BOLD) └─────────────────────────────────────────────┘$(RESET)"
+	@echo "$(BLUE)$(BOLD) � Starting development server...$(RESET)"
 	@echo ""
-	@echo "$(BLUE)$(BOLD) ⚡ Compilation du backend...$(RESET)"
+ifeq ($(OS),Windows_NT)
+	@powershell -ExecutionPolicy Bypass -File "scripts\\ultimate-clean.ps1" -Force -Quiet
+else
+	@make kill-ports
+endif
+	@echo "$(BLUE) ⚡ Building backend...$(RESET)"
 	@cd $(BACK_DIR) && npm run build > /dev/null 2>&1
-	@echo "$(GREEN) ✓ Backend compilé !$(RESET)"
+	@echo "$(GREEN) ✓ Backend ready$(RESET)"
 	@echo ""
-	@echo "$(BLUE)$(BOLD) � Démarrage des services...$(RESET)"
+	@echo "$(BLUE) 📡 Starting services...$(RESET)"
 ifeq ($(OS),Windows_NT)
 	@cd $(BACK_DIR) && start /B npm run server > /dev/null 2>&1
 else
@@ -260,11 +272,26 @@ reset-db: kill-ports
 	@echo "$(RED)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
 	@echo ""
 ifeq ($(OS),Windows_NT)
-	@if exist "$(BACK_DIR)\database.sqlite" del /Q "$(BACK_DIR)\database.sqlite" 2>nul
+	@powershell -Command "& { if (Test-Path 'backend/database.sqlite') { Remove-Item 'backend/database.sqlite' -Force; Write-Host 'Database file deleted' -ForegroundColor Green } else { Write-Host 'No database file found' -ForegroundColor Yellow } }"
+	@powershell -Command "& { Get-ChildItem 'backend' -Filter '*.db' -ErrorAction SilentlyContinue | ForEach-Object { Remove-Item $_.FullName -Force; Write-Host \"Deleted: $$($_.Name)\" -ForegroundColor Red } }"
+	@powershell -Command "& { Get-ChildItem 'backend' -Filter '*.sqlite*' -ErrorAction SilentlyContinue | ForEach-Object { Remove-Item $_.FullName -Force; Write-Host \"Deleted: $$($_.Name)\" -ForegroundColor Red } }"
 else
-	@rm -f $(BACK_DIR)/database.sqlite 2>/dev/null || true
+	@rm -f $(BACK_DIR)/database.sqlite $(BACK_DIR)/*.db $(BACK_DIR)/*.sqlite* 2>/dev/null || true
+	@echo "$(GREEN) ✓ Database files removed$(RESET)"
 endif
-	@echo "$(GREEN)$(BOLD) ✅ Base de données supprimée !$(RESET)"
+	@echo "$(GREEN)$(BOLD) ✅ Base de données réinitialisée !$(RESET)"
 	@echo ""
 
-.PHONY: help dev install clean status kill-ports reset-db
+# Nettoyage complet du projet
+nuke:
+	@echo ""
+	@echo "$(RED)$(BOLD) 🧹 Deep Project Cleanup$(RESET)"
+	@echo ""
+ifeq ($(OS),Windows_NT)
+	@powershell -ExecutionPolicy Bypass -File "scripts\\ultimate-clean.ps1"
+else
+	@echo "$(RED)Ultimate cleanup is only available on Windows$(RESET)"
+	@echo "$(YELLOW)Use 'make clean' instead$(RESET)"
+endif
+
+.PHONY: help dev install clean nuke status kill-ports reset-db
