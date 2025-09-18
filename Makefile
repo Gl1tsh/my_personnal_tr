@@ -140,42 +140,61 @@ help:
 
 dev: 
 	@echo ""
-	@echo "$(BLUE)$(BOLD) � Starting development server...$(RESET)"
+	@echo "$(BLUE)$(BOLD) 🚀 Starting development server...$(RESET)"
 	@echo ""
-ifeq ($(OS),Windows_NT)
-	@powershell -ExecutionPolicy Bypass -File "scripts\\ultimate-clean.ps1" -Force -Quiet
-else
 	@make kill-ports
-endif
 	@echo "$(BLUE) ⚡ Building backend...$(RESET)"
 	@cd $(BACK_DIR) && npm run build > /dev/null 2>&1
 	@echo "$(GREEN) ✓ Backend ready$(RESET)"
 	@echo ""
 	@echo "$(BLUE) 📡 Starting services...$(RESET)"
-ifeq ($(OS),Windows_NT)
-	@cd $(BACK_DIR) && start /B npm run server > /dev/null 2>&1
-	@cd $(BACK_DIR) && start /B npm run chat > /dev/null 2>&1
-else
-	@cd $(BACK_DIR) && nohup npm run server >/dev/null 2>&1 &
-	@cd $(BACK_DIR) && nohup npm run chat >/dev/null 2>&1 &
-endif
-	@$(WAIT)
-	@echo "$(GREEN)$(BOLD) ✅ Backend API démarré sur port 3001$(RESET)"
-	@echo "$(GREEN)$(BOLD) ✅ Socket.IO démarré sur port 3000$(RESET)"
-	@echo "$(YELLOW)$(BOLD) 🌐 Lancement du frontend...$(RESET)"
-	@echo ""
-	@echo "$(CYAN)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║                     🎉 PRÊT À DÉVELOPPER ! 🎉                ║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)🔗 Backend API:$(RESET)  $(BLUE)$(BOLD)http://localhost:3001$(RESET)                      $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)📡 Socket.IO:$(RESET)    $(BLUE)$(BOLD)http://localhost:3000$(RESET)                      $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(MAGENTA)$(BOLD)🌐 Frontend App:$(RESET) $(BLUE)$(BOLD)http://localhost:3002$(RESET)                      $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)             $(WHITE)$(BOLD)Appuyez sur Ctrl+C pour arrêter$(RESET)                  $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
-	@echo ""
-	@cd $(FRONT_DIR) && npm run dev || (echo "" && echo "$(YELLOW)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)" && echo "$(YELLOW)$(BOLD) ║                        👋 ARRÊT PROPRE 👋                    ║$(RESET)" && echo "$(YELLOW)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)" && echo "$(YELLOW)$(BOLD) ║                                                              ║$(RESET)" && echo "$(YELLOW)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Serveurs arrêtés correctement$(RESET)                            $(YELLOW)$(BOLD)║$(RESET)" && echo "$(YELLOW)$(BOLD) ║$(RESET)  $(CYAN)$(BOLD)⚡ Tapez 'make' pour relancer le menu$(RESET)                       $(YELLOW)$(BOLD)║$(RESET)" && echo "$(YELLOW)$(BOLD) ║                                                              ║$(RESET)" && echo "$(YELLOW)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)" && echo "")
+	@bash -c '\
+		CLEANUP_DONE=false; \
+		cleanup() { \
+			if [ "$$CLEANUP_DONE" = "true" ]; then return; fi; \
+			CLEANUP_DONE=true; \
+			printf "\n"; \
+			printf "\033[33m\033[1m 🧹 Nettoyage en cours...\033[0m\n"; \
+			lsof -ti:3000 | xargs kill -9 2>/dev/null || true; \
+			lsof -ti:3001 | xargs kill -9 2>/dev/null || true; \
+			lsof -ti:3002 | xargs kill -9 2>/dev/null || true; \
+			pkill -f "npm run server" 2>/dev/null || true; \
+			pkill -f "npm run chat" 2>/dev/null || true; \
+			pkill -f "vite" 2>/dev/null || true; \
+			sleep 1; \
+			printf "\033[32m\033[1m ✅ Tous les ports ont été libérés\033[0m\n"; \
+			printf "\n"; \
+			printf "\033[33m\033[1m ╔══════════════════════════════════════════════════════════════╗\033[0m\n"; \
+			printf "\033[33m\033[1m ║                        👋 ARRÊT PROPRE 👋                    ║\033[0m\n"; \
+			printf "\033[33m\033[1m ╠══════════════════════════════════════════════════════════════╣\033[0m\n"; \
+			printf "\033[33m\033[1m ║                                                              ║\033[0m\n"; \
+			printf "\033[33m\033[1m ║\033[0m  \033[32m\033[1m✅ Serveurs arrêtés correctement\033[0m                            \033[33m\033[1m║\033[0m\n"; \
+			printf "\033[33m\033[1m ║\033[0m  \033[36m\033[1m⚡ Tapez make pour relancer le menu\033[0m                         \033[33m\033[1m║\033[0m\n"; \
+			printf "\033[33m\033[1m ║                                                              ║\033[0m\n"; \
+			printf "\033[33m\033[1m ╚══════════════════════════════════════════════════════════════╝\033[0m\n"; \
+			printf "\n"; \
+		}; \
+		trap cleanup SIGINT SIGTERM; \
+		cd $(BACK_DIR) && nohup npm run server >/dev/null 2>&1 & \
+		cd $(BACK_DIR) && nohup npm run chat >/dev/null 2>&1 & \
+		sleep 3; \
+		printf "\033[32m\033[1m ✅ Backend API démarré sur port 3001\033[0m\n"; \
+		printf "\033[32m\033[1m ✅ Socket.IO démarré sur port 3000\033[0m\n"; \
+		printf "\033[33m\033[1m 🌐 Lancement du frontend...\033[0m\n"; \
+		printf "\n"; \
+		printf "\033[36m\033[1m ╔══════════════════════════════════════════════════════════════╗\033[0m\n"; \
+		printf "\033[36m\033[1m ║                     🎉 PRÊT À DÉVELOPPER ! 🎉                ║\033[0m\n"; \
+		printf "\033[36m\033[1m ╠══════════════════════════════════════════════════════════════╣\033[0m\n"; \
+		printf "\033[36m\033[1m ║                                                              ║\033[0m\n"; \
+		printf "\033[36m\033[1m ║\033[0m  \033[32m\033[1m🔗 Backend API:\033[0m  \033[34m\033[1mhttp://localhost:3001\033[0m                      \033[36m\033[1m║\033[0m\n"; \
+		printf "\033[36m\033[1m ║\033[0m  \033[32m\033[1m📡 Socket.IO:\033[0m    \033[34m\033[1mhttp://localhost:3000\033[0m                      \033[36m\033[1m║\033[0m\n"; \
+		printf "\033[36m\033[1m ║\033[0m  \033[35m\033[1m🌐 Frontend App:\033[0m \033[34m\033[1mhttp://localhost:3002\033[0m                      \033[36m\033[1m║\033[0m\n"; \
+		printf "\033[36m\033[1m ║                                                              ║\033[0m\n"; \
+		printf "\033[36m\033[1m ║\033[0m             \033[37m\033[1mAppuyez sur Ctrl+C pour arrêter\033[0m                  \033[36m\033[1m║\033[0m\n"; \
+		printf "\033[36m\033[1m ╚══════════════════════════════════════════════════════════════╝\033[0m\n"; \
+		printf "\n"; \
+		cd $(FRONT_DIR) && npm run dev || cleanup; \
+	'
 
 install:
 	@echo ""
