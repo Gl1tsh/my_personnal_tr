@@ -184,7 +184,8 @@ const loginOpts: RouteShorthandOptions = {
               login: { type: 'string' },
               email: { type: 'string' }
             }
-          }
+          },
+          sessionToken: { type: 'string' }
         }
       },
       400: {
@@ -322,45 +323,54 @@ const profileOpts: RouteShorthandOptions = {
 server.get('/auth/profile', profileOpts, async (request, reply) => {
   const authHeader = request.headers.authorization
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return reply.status(401).send({ error: 'Token manquant' })
+    return reply.status(401).header('Content-Type', 'application/json').send({ error: 'Token manquant' })
   }
 
   const token = authHeader.split(' ')[1]
   const session = activeSessions.get(token)
   
   if (!session) {
-    return reply.status(401).send({ error: 'Session invalide' })
+    return reply.status(401).header('Content-Type', 'application/json').send({ error: 'Session invalide' })
   }
 
   const db = getDb()
   
   try {
-    db.get(
-      'SELECT id, name, login, email, rank, avatar FROM users WHERE id = ?',
-      [session.userId],
-      (err, row: any) => {
-        if (err) {
-          return reply.status(500).send({ error: err.message })
-        }
+    // Promisifier db.get pour éviter les problèmes de callback
+    const getUserById = (userId: number): Promise<any> => {
+      return new Promise((resolve, reject) => {
+        db.get(
+          'SELECT id, name, login, email, rank, avatar FROM users WHERE id = ?',
+          [userId],
+          (err, row) => {
+            if (err) reject(err)
+            else resolve(row)
+          }
+        )
+      })
+    }
 
-        if (!row) {
-          return reply.status(404).send({ error: 'Utilisateur non trouvé' })
-        }
+    const row = await getUserById(session.userId)
 
-        const user = {
-          id: row.id,
-          name: row.name,
-          login: row.login,
-          email: row.email,
-          rank: row.rank || 1,
-          avatar: row.avatar ? Buffer.from(row.avatar).toString('base64') : null
-        }
+    if (!row) {
+      return reply.status(404).header('Content-Type', 'application/json').send({ error: 'Utilisateur non trouvé' })
+    }
 
-        reply.status(200).send({ user })
-      }
-    )
+    const user = {
+      id: row.id,
+      name: row.name,
+      login: row.login,
+      email: row.email,
+      rank: row.rank || 1,
+      avatar: row.avatar ? Buffer.from(row.avatar).toString('base64') : null
+    }
+
+    console.log('✅ Profil récupéré pour:', row.login)
+    return reply.status(200).header('Content-Type', 'application/json').send({ user })
+
   } catch (err) {
-    reply.status(500).send({ error: (err as Error).message })
+    console.error('❌ Erreur récupération profil:', err)
+    return reply.status(500).header('Content-Type', 'application/json').send({ error: (err as Error).message })
   }
 })
 
