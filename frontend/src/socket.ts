@@ -10,18 +10,39 @@ export const socket = io('http://localhost:3000', {
 });
 
 // 2) Quand on se connecte
-socket.on('connect', () => {
+socket.on('connect', async () => {
   console.log('📡 Socket.IO connecté :', socket.id);
   
-  // Envoyer notre pseudo au serveur
-  const userProfile = localStorage.getItem('userProfile');
-  if (userProfile) {
-    const profile = JSON.parse(userProfile);
-    socket.emit('set_username', profile.displayName);
-    console.log('👤 Pseudo envoyé au serveur:', profile.displayName);
+  // Récupérer le pseudo depuis l'authentification centralisée
+  const token = sessionStorage.getItem('authToken');
+  if (token) {
+    try {
+      // Récupérer les infos utilisateur via l'API
+      const response = await fetch('http://localhost:3001/auth/profile', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const username = result.user.name;
+        socket.emit('set_username', username);
+        console.log('👤 Pseudo envoyé au serveur:', username);
+      } else {
+        // Token invalide, utiliser un pseudo par défaut
+        socket.emit('set_username', `User_${socket.id?.substring(0, 6) || 'Unknown'}`);
+      }
+    } catch (error) {
+      console.error('❌ Erreur récupération profil pour Socket.IO:', error);
+      socket.emit('set_username', `User_${socket.id?.substring(0, 6) || 'Unknown'}`);
+    }
   } else {
-    // Pseudo par défaut si pas de profil
-    socket.emit('set_username', `User_${socket.id?.substring(0, 6) || 'Unknown'}`);
+    // Pas connecté, pseudo par défaut
+    socket.emit('set_username', `BonjourPage${Math.floor(Math.random() * 100)}`);
   }
 });
 
@@ -51,14 +72,29 @@ socket.on('connect_error', (error: any) => {
 });
 
 // Gestion de la reconnexion
-socket.on('reconnect', (attemptNumber: number) => {
+socket.on('reconnect', async (attemptNumber: number) => {
   console.log('🔄 Socket.IO reconnecté :', attemptNumber);
-  // Renvoyer le pseudo après reconnexion
-  const userProfile = localStorage.getItem('userProfile');
-  if (userProfile) {
-    const profile = JSON.parse(userProfile);
-    socket.emit('set_username', profile.displayName);
-    console.log('👤 Pseudo renvoyé après reconnexion:', profile.displayName);
+  // Renvoyer le pseudo après reconnexion en utilisant l'auth centralisée
+  const token = sessionStorage.getItem('authToken');
+  if (token) {
+    try {
+      const response = await fetch('http://localhost:3001/auth/profile', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        socket.emit('set_username', result.user.name);
+        console.log('👤 Pseudo renvoyé après reconnexion:', result.user.name);
+      }
+    } catch (error) {
+      console.error('❌ Erreur reconnexion Socket.IO:', error);
+    }
   }
 });
 

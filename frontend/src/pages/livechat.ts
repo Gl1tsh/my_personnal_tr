@@ -4,15 +4,34 @@ import { socket, sendMessageToBackend } from '../socket.js';
 type Message = { from: string; text: string };
 type History = { [user: string]: Message[] };
 
-// Fonction pour récupérer le profil utilisateur
-function getUserProfile() {
-  const saved = localStorage.getItem('userProfile');
-  return saved ? JSON.parse(saved) : null;
+// Fonction pour récupérer le profil utilisateur via l'API centralisée
+async function getUserProfile() {
+  const token = sessionStorage.getItem('authToken');
+  if (!token) return null;
+
+  try {
+    const response = await fetch('http://localhost:3001/auth/profile', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) return null;
+    
+    const result = await response.json();
+    return result.user;
+  } catch (error) {
+    console.error('❌ Erreur récupération profil chat:', error);
+    return null;
+  }
 }
 
 const history: History = {};
 
-export function initChatPage() {
+export async function initChatPage() {
   const btnGen = document.getElementById('btn-general')! as HTMLButtonElement;
   const dmList = document.getElementById('dm-list')! as HTMLDivElement;
   const userList = document.getElementById('user-list')! as HTMLDivElement;
@@ -26,15 +45,11 @@ export function initChatPage() {
   let current = '';
   history[current] = [];
 
-  // Récupérer le nom d'utilisateur depuis le profil
-  const userProfile = getUserProfile();
-  let username: string = userProfile ? userProfile.displayName : 'Anonyme';
+  // Récupérer le nom d'utilisateur depuis l'API centralisée
+  const userProfile = await getUserProfile();
+  let username: string = userProfile ? userProfile.name : 'Anonyme';
   
-  // Si le profil change, mettre à jour le username
-  window.addEventListener('profileUpdated', (event: any) => {
-    username = event.detail.displayName;
-    console.log('👤 Nom d\'utilisateur mis à jour:', username);
-  });
+  console.log('👤 Utilisateur chat:', username);
 
   const blockedUsers = new Set<string>(JSON.parse(localStorage.getItem('blockedUsers') || '[]'));
   const saveBlocked = () => {

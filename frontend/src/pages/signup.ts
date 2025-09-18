@@ -56,11 +56,32 @@ export function initSignupPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        // Même technique que login.ts pour éviter "Unexpected end of JSON input"
+        const text = await response.text();
+        let errorData;
+        try {
+          errorData = text ? JSON.parse(text) : { error: 'Erreur serveur' };
+        } catch (parseError) {
+          console.error('❌ Erreur parsing réponse d\'erreur:', parseError);
+          throw new Error('Erreur serveur: réponse invalide');
+        }
         throw new Error(errorData.error || 'Erreur lors de l\'inscription');
       }
 
-      const result = await response.json();
+      // Même technique que login.ts pour le parsing JSON
+      const text = await response.text();
+      let result;
+      try {
+        if (!text || text.trim() === '') {
+          console.error('❌ Réponse vide du serveur signup');
+          throw new Error('Le serveur a renvoyé une réponse vide');
+        }
+        result = JSON.parse(text);
+        console.log('📋 JSON signup parsé avec succès:', result);
+      } catch (parseError) {
+        console.error('❌ Erreur parsing JSON signup:', parseError);
+        throw new Error('Impossible de parser la réponse du serveur');
+      }
       console.log('✅ Utilisateur créé côté serveur:', result);
 
       // 🎉 NOTIFICATION DE SUCCÈS - Plus rien en localStorage !

@@ -61,10 +61,10 @@ function updateActiveNavLink(activePage: string) {
 /**
  * Initialize all page modules
  */
-function initPages() {
+async function initPages() {
   try {
     initHomePage();
-    initChatPage();
+    await initChatPage(); // Maintenant async
     initLoginPage();
     initSignupPage();
     initGameModesPage();
@@ -142,12 +142,12 @@ export function navigateTo(page: string, updateHistory = true) {
 /**
  * Application initialization
  */
-function initApp() {
+async function initApp() {
   console.log('🚀 Initializing Transcendance...');
   
   try {
     // Initialize all page modules
-    initPages();
+    await initPages();
 
     // Setup navigation
     initNavigation();
