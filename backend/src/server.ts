@@ -6,16 +6,12 @@ import fastifyCors from '@fastify/cors'
 
 const server: FastifyInstance = Fastify({})
 
-// Hook pour ajouter les headers CORS manuellement
-server.addHook('preHandler', async (request, reply) => {
-  reply.header('Access-Control-Allow-Origin', 'http://localhost:3002')
-  reply.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-  reply.header('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-  reply.header('Access-Control-Allow-Credentials', 'true')
-  
-  if (request.method === 'OPTIONS') {
-    reply.status(200).send()
-  }
+// Configuration CORS simple qui marche !
+server.register(fastifyCors, {
+  origin: true, // Autorise tout pour le dev
+  credentials: true,
+  allowedHeaders: ['content-type', 'authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 })
 
 // Supprimer la fonction setupServer
@@ -93,17 +89,28 @@ const postOpts: RouteShorthandOptions = {
 server.get('/users', getUsersOpts, async (request, reply) => {
   const db = getDb()
   
-  db.all('SELECT id, name, login, rank, avatar FROM users', (err, rows) => {
-    if (err) {
-      reply.status(500).send({ error: err.message })
-      return
+  try {
+    // Promisifier db.all
+    const getAllUsers = (): Promise<any[]> => {
+      return new Promise((resolve, reject) => {
+        db.all('SELECT id, name, login, rank, avatar FROM users', (err, rows) => {
+          if (err) reject(err)
+          else resolve(rows as any[])
+        })
+      })
     }
+
+    const rows = await getAllUsers()
     const formattedRows = rows.map((row: any) => ({
       ...row,
       avatar: row.avatar ? Buffer.from(row.avatar).toString('base64') : null
     }))
-    reply.send(formattedRows)
-  })
+    
+    return reply.status(200).header('Content-Type', 'application/json').send(formattedRows)
+    
+  } catch (err: any) {
+    return reply.status(500).header('Content-Type', 'application/json').send({ error: err.message })
+  }
 })
 
 server.post('/users', postOpts, async (request, reply) => {
@@ -202,52 +209,76 @@ server.post('/auth/login', loginOpts, async (request, reply) => {
   const db = getDb()
   const { identifier, password } = request.body as { identifier: string; password: string }
 
+  console.log('🔐 Tentative de connexion pour:', identifier)
+
   if (!identifier || !password) {
-    return reply.status(400).send({ error: 'Identifiant et mot de passe requis' })
+    console.log('❌ Données manquantes:', { identifier: !!identifier, password: !!password })
+    return reply.status(400).header('Content-Type', 'application/json').send({ error: 'Identifiant et mot de passe requis' })
   }
 
   try {
-    // Chercher l'utilisateur par login ou email
-    db.get(
-      'SELECT id, name, login, email, password FROM users WHERE login = ? OR email = ?',
-      [identifier, identifier],
-      async (err, row: any) => {
-        if (err) {
-          return reply.status(500).send({ error: err.message })
-        }
+    // Promisifier db.get pour éviter les problèmes de callback
+    const getUserByIdentifier = (identifier: string): Promise<any> => {
+      return new Promise((resolve, reject) => {
+        db.get(
+          'SELECT id, name, login, email, password FROM users WHERE login = ? OR email = ?',
+          [identifier, identifier],
+          (err, row) => {
+            if (err) reject(err)
+            else resolve(row)
+          }
+        )
+      })
+    }
 
-        if (!row) {
-          return reply.status(400).send({ error: 'Utilisateur non trouvé' })
-        }
+    // Chercher l'utilisateur
+    const row = await getUserByIdentifier(identifier)
+    
+    if (!row) {
+      console.log('❌ Utilisateur non trouvé:', identifier)
+      return reply.status(400).header('Content-Type', 'application/json').send({ error: 'Utilisateur non trouvé' })
+    }
 
-        // Vérifier le mot de passe
-        const isValidPassword = await bcrypt.compare(password, row.password)
-        if (!isValidPassword) {
-          return reply.status(400).send({ error: 'Mot de passe incorrect' })
-        }
+    console.log('👤 Utilisateur trouvé:', row.login)
 
-        // Succès - renvoyer les infos utilisateur (sans le mot de passe)
-        const user = {
-          id: row.id,
-          name: row.name,
-          login: row.login,
-          email: row.email
-        }
+    // Vérifier le mot de passe
+    const isValidPassword = await bcrypt.compare(password, row.password)
+    if (!isValidPassword) {
+      console.log('❌ Mot de passe incorrect pour:', row.login)
+      return reply.status(400).header('Content-Type', 'application/json').send({ error: 'Mot de passe incorrect' })
+    }
 
-        // Créer une session simple (stockage en mémoire)
-        const sessionToken = generateSessionToken()
-        activeSessions.set(sessionToken, { userId: row.id, login: row.login })
+    // Succès - renvoyer les infos utilisateur (sans le mot de passe)
+    const user = {
+      id: row.id,
+      name: row.name,
+      login: row.login,
+      email: row.email
+    }
 
-        // Renvoyer le token dans la réponse (côté client le stockera)
-        reply.status(200).send({ 
-          message: 'Connexion réussie', 
-          user,
-          sessionToken // Le frontend utilisera ça temporairement
-        })
-      }
-    )
-  } catch (err) {
-    reply.status(500).send({ error: (err as Error).message })
+    // Créer une session simple (stockage en mémoire)
+    const sessionToken = generateSessionToken()
+    activeSessions.set(sessionToken, { userId: row.id, login: row.login })
+
+    console.log('✅ Connexion réussie pour:', row.login, 'Token:', sessionToken.substring(0, 10) + '...')
+
+    // Renvoyer le token dans la réponse (côté client le stockera)
+    return reply
+      .status(200)
+      .header('Content-Type', 'application/json')
+      .send({ 
+        message: 'Connexion réussie', 
+        user,
+        sessionToken // Le frontend utilisera ça temporairement
+      })
+      
+  } catch (err: any) {
+    console.error('❌ Erreur générale:', err)
+    if (err.message) {
+      return reply.status(500).header('Content-Type', 'application/json').send({ error: err.message })
+    } else {
+      return reply.status(500).header('Content-Type', 'application/json').send({ error: 'Erreur serveur interne' })
+    }
   }
 })
 

@@ -16,6 +16,8 @@ export function initLoginPage() {
     const formData = new FormData(form);
     const { identifier, password } = Object.fromEntries(formData.entries());
 
+    console.log('🚀 Tentative de connexion pour:', identifier);
+
     try {
       const response = await fetch('http://localhost:3001/auth/login', {
         method: 'POST',
@@ -26,7 +28,27 @@ export function initLoginPage() {
         credentials: 'include',
       });
 
-      const result = await response.json();
+      console.log('📡 Réponse reçue:', response.status, response.statusText);
+
+      // CONTOURNEMENT: On teste directement la réponse JSON au lieu du header
+      let result;
+      try {
+        const text = await response.text();
+        console.log('📄 Texte brut reçu:', text);
+        
+        if (!text || text.trim() === '') {
+          console.error('❌ Réponse vide du serveur');
+          alert('Erreur: Le serveur a renvoyé une réponse vide');
+          return;
+        }
+        
+        result = JSON.parse(text);
+        console.log('📋 JSON parsé avec succès:', result);
+      } catch (parseError) {
+        console.error('❌ Erreur parsing JSON:', parseError);
+        alert('Erreur: Impossible de parser la réponse du serveur');
+        return;
+      }
 
       if (!response.ok) {
         alert('Erreur: ' + result.error);
@@ -52,7 +74,7 @@ export function initLoginPage() {
       
     } catch (error) {
       console.error('Error during login:', error);
-      alert('Erreur de connexion au serveur');
+      alert('Erreur de connexion au serveur. Vérifiez que le serveur backend est démarré.');
     }
   };
 }
