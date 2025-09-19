@@ -47,18 +47,18 @@ menu:
 	@echo ""
 	@echo "$(CYAN)$(BOLD) ╔════════════════════════════════════════════════════════════╗$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                    🚀 TRANSCENDANCE                        ║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║                  Développement Menu                        ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╠════════════════════════════════════════════════════════════╣$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                            ║$(RESET)"
-	@echo "$(WHITE) ║  $(BOLD)1.$(RESET) $(GREEN)Lancer l'application$(RESET)                                   $(CYAN)║$(RESET)"
-	@echo "$(WHITE) ║  $(BOLD)2.$(RESET) $(YELLOW)Installer les dépendances$(RESET)                              $(CYAN)║$(RESET)"
-	@echo "$(WHITE) ║  $(BOLD)3.$(RESET) $(RED)Nettoyer le projet$(RESET)                                     $(CYAN)║$(RESET)"
-	@echo "$(WHITE) ║  $(BOLD)4.$(RESET) $(RED)Vider la base de données$(RESET)                               $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(WHITE) ║  $(BOLD)0.$(RESET) $(DIM)Quitter$(RESET)                                                $(CYAN)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(BOLD)1.$(RESET) $(GREEN)Lancer l'application$(RESET)                                   $(CYAN)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(BOLD)2.$(RESET) $(YELLOW)Installer les dépendances$(RESET)                              $(CYAN)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(BOLD)3.$(RESET) $(RED)Nettoyer le projet$(RESET)                                     $(CYAN)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(BOLD)4.$(RESET) $(RED)Vider la base de données$(RESET)                               $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(BOLD)0.$(RESET) $(DIM)Quitter$(RESET)                                                $(CYAN)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                            ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╠════════════════════════════════════════════════════════════╣$(RESET)"
-	@echo "$(WHITE) ║  $(DIM)Backend: http://localhost:3001 (API)$(RESET)                      $(CYAN)║$(RESET)"
-	@echo "$(WHITE) ║  $(DIM)Frontend: http://localhost:3002 (App)$(RESET)                     $(CYAN)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(DIM)Websocket: http://localhost:3000 (API)$(RESET)                    $(CYAN)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(DIM)Backend: http://localhost:3001 (API)$(RESET)                      $(CYAN)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(DIM)Frontend: http://localhost:3002 (App)$(RESET)                     $(CYAN)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╚════════════════════════════════════════════════════════════╝$(RESET)"
 	@echo ""
 	@while true; do \
@@ -95,42 +95,6 @@ BLUE = \033[34m
 MAGENTA = \033[35m
 CYAN = \033[36m
 WHITE = \033[37m
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#                               🎯 MENU PRINCIPAL
-# ═══════════════════════════════════════════════════════════════════════════════
-
-help:
-	@echo ""
-	@echo ""
-	@echo "$(CYAN)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║                        🚀 TRANSCENDANCE 🚀                   ║$(RESET)"
-		@echo "$(CYAN)$(BOLD) ║                    🚀 TRANSCENDANCE 🚀                   ║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║                      Menu de Développement                   ║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)1.$(RESET) $(GREEN)$(BOLD)make dev$(RESET)       $(DIM)→ Lance l'application$(RESET)              $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)2.$(RESET) $(YELLOW)$(BOLD)make install$(RESET)   $(DIM)→ Installe les dépendances$(RESET)         $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)3.$(RESET) $(BLUE)$(BOLD)make clean$(RESET)     $(DIM)→ Nettoyage léger (ports)$(RESET)          $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)4.$(RESET) $(RED)$(BOLD)make nuke$(RESET)      $(DIM)→ Nettoyage complet$(RESET)               $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)5.$(RESET) $(MAGENTA)$(BOLD)make status$(RESET)    $(DIM)→ État des ports$(RESET)                   $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)6.$(RESET) $(RED)$(BOLD)make reset-db$(RESET)  $(DIM)→ Reset base de données$(RESET)           $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)1.$(RESET) $(GREEN)$(BOLD)make dev$(RESET)       $(DIM)→ Lance l'application complète$(RESET)     $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)2.$(RESET) $(YELLOW)$(BOLD)make install$(RESET)   $(DIM)→ Installe toutes les dépendances$(RESET)  $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)3.$(RESET) $(RED)$(BOLD)make clean$(RESET)     $(DIM)→ Nettoyage complet du projet$(RESET)     $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)4.$(RESET) $(BLUE)$(BOLD)make status$(RESET)    $(DIM)→ Vérifie l'état des ports$(RESET)        $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)5.$(RESET) $(RED)$(BOLD)make reset-db$(RESET)  $(DIM)→ Vider la base de données$(RESET)       $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)Backend:$(RESET)  $(BOLD)$(BLUE)http://localhost:3001$(RESET) $(DIM)(API)$(RESET)                  $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)Socket.IO:$(RESET) $(BOLD)$(BLUE)http://localhost:3000$(RESET) $(DIM)(Chat)$(RESET)                 $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)Frontend:$(RESET) $(BOLD)$(MAGENTA)http://localhost:3002$(RESET) $(DIM)(App)$(RESET)                  $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
-	@echo "$(CYAN)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
-	@echo ""
-	@echo "$(WHITE)$(BOLD)                    Tapez votre choix (1-5): $(RESET)"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #                            🚀 COMMANDES PRINCIPALES
