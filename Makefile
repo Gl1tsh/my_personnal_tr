@@ -223,10 +223,12 @@ clean:
 ifeq ($(OS),Windows_NT)
 	@$(KILL_PORTS) > nul 2>&1
 else
+	@$(KILL_3000) > /dev/null 2>&1
 	@$(KILL_3001) > /dev/null 2>&1
 	@$(KILL_3002) > /dev/null 2>&1
 endif
 	@$(WAIT) > /dev/null 2>&1
+	@echo "$(GREEN) ║  ✓ Port 3000 libéré                                       $(RESET)"
 	@echo "$(GREEN) ║  ✓ Port 3001 libéré                                       $(RESET)"
 	@echo "$(GREEN) ║  ✓ Port 3002 libéré                                       $(RESET)"
 	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
