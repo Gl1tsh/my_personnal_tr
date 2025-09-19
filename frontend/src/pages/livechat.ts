@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { socket, sendMessageToBackend } from '../socket.js';
+import { socket, sendMessageToBackend, updateUsernameOnServer } from '../socket.js';
 
 type Message = { from: string; text: string };
 type History = { [user: string]: Message[] };
@@ -47,14 +47,58 @@ export async function initChatPage() {
 
   // Récupérer le nom d'utilisateur depuis l'API centralisée
   const userProfile = await getUserProfile();
-  let username: string = userProfile ? userProfile.name : 'Anonyme';
+  let username: string = userProfile ? userProfile.name : `User_${socket.id?.substring(0, 6) || 'Unknown'}`;
   
   console.log('👤 Utilisateur chat:', username);
+
+  // 🔄 Forcer la mise à jour du pseudo sur le socket si on est connecté
+  if (userProfile && userProfile.name) {
+    updateUsernameOnServer(userProfile.name);
+    console.log('🔄 Mise à jour forcée du pseudo sur le socket:', userProfile.name);
+  }
 
   const blockedUsers = new Set<string>(JSON.parse(localStorage.getItem('blockedUsers') || '[]'));
   const saveBlocked = () => {
     localStorage.setItem('blockedUsers', JSON.stringify([...blockedUsers]));
   };
+
+  window.addEventListener('user_list', (event: any) => {
+    // Trouver notre pseudo réel dans la liste
+    const ourUserInfo = event.detail.find((user: any) => user.id === socket.id);
+    if (ourUserInfo && ourUserInfo.username) {
+      username = ourUserInfo.username;
+      console.log('👤 Pseudo mis à jour depuis le serveur:', username);
+    }
+    
+    // Mettre à jour la liste des utilisateurs dans l'interface
+    userList.innerHTML = '';
+    for (const userInfo of event.detail) {
+      // userInfo contient maintenant {id: string, username: string}
+      // Ne pas afficher notre propre socket ID dans la liste
+      if (userInfo.id === socket.id) continue;
+      
+      const ul = document.createElement('div');
+      ul.className = 'p-2 hover:bg-gray-700 cursor-pointer rounded';
+      ul.textContent = userInfo.username;
+      
+      const chatButton = document.createElement('span');
+      chatButton.textContent = " 💬";
+      chatButton.className = 'ml-2 text-blue-400 hover:text-blue-300 cursor-pointer';
+      ul.appendChild(chatButton);
+      
+      chatButton.onclick = (e) => {
+        e.stopPropagation();
+        createDmTab(userInfo.id, userInfo.username);
+        switchTo(userInfo.id);
+      };
+      
+      ul.onclick = () => {
+        localStorage.setItem('dmTarget', userInfo.id);
+        window.location.hash = '#profile';
+      };
+      userList.appendChild(ul);
+    }
+  });
 
   blockBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -84,27 +128,33 @@ export async function initChatPage() {
       return;
     sendMessageToBackend(current, text);
     
-    // Ajouter notre message à l'historique (canal général ET DMs)
-    history[current].push({ from: username, text });
+    // Ne pas ajouter notre message ici - laisser le serveur nous le renvoyer
+    // avec le bon pseudo pour éviter les problèmes de synchronisation
     input.value = '';
-    render();
   };
 
   window.addEventListener('message_backend_to_frontend', (event: any) => {
     const from = event.detail.from;
     const to = event.detail.to;
     const text = event.detail.text;
+    const originalFrom = event.detail.originalFrom;
     let target;
 
-    // Ignorer nos propres messages pour éviter la duplication
-    if (event.detail.originalFrom === socket.id) return;
-
     if (to == '') {
+      // Message général
       target = '';
     }
     else {
-      createDmTab(from);
-      target = from;
+      // Message privé - déterminer avec qui on parle
+      if (originalFrom === socket.id) {
+        // C'est notre message, l'onglet DM doit être avec le destinataire
+        createDmTab(to);
+        target = to;
+      } else {
+        // C'est le message de quelqu'un d'autre, l'onglet DM est avec l'expéditeur
+        createDmTab(originalFrom, from);
+        target = originalFrom;
+      }
     }
 
     if (!history[target]) {
@@ -114,36 +164,6 @@ export async function initChatPage() {
     history[target].push({ from, text });
     if (target === current)
       render();
-  });
-
-  window.addEventListener('user_list', (event: any) => {
-    userList.innerHTML = '';
-    for (const userInfo of event.detail) {
-      // userInfo contient maintenant {id: string, username: string}
-      // Ne pas afficher notre propre socket ID dans la liste
-      if (userInfo.id === socket.id) continue;
-      
-      const ul = document.createElement('div');
-      ul.className = 'p-2 hover:bg-gray-700 cursor-pointer rounded';
-      ul.textContent = userInfo.username;
-      
-      const chatButton = document.createElement('span');
-      chatButton.textContent = " 💬";
-      chatButton.className = 'ml-2 text-blue-400 hover:text-blue-300 cursor-pointer';
-      ul.appendChild(chatButton);
-      
-      chatButton.onclick = (e) => {
-        e.stopPropagation();
-        createDmTab(userInfo.id, userInfo.username);
-        switchTo(userInfo.id);
-      };
-      
-      ul.onclick = () => {
-        localStorage.setItem('dmTarget', userInfo.id);
-        window.location.hash = '#profile';
-      };
-      userList.appendChild(ul);
-    }
   });
 
   btnGen.onclick = () => switchTo('');

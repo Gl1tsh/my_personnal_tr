@@ -37,10 +37,15 @@ io.on("connection", (socket) => {
     };
 
     if (msg.to != '') {
-      // Message privé - envoyer seulement au destinataire
+      // Message privé - envoyer au destinataire ET à l'expéditeur
       const targetSocket = clients.get(msg.to);
       if (targetSocket) {
         targetSocket.emit("message_backend_to_frontend", messageWithUsername);
+      }
+      // Envoyer aussi à l'expéditeur pour qu'il voie son message dans la conversation
+      const senderSocket = clients.get(msg.from);
+      if (senderSocket && senderSocket !== targetSocket) {
+        senderSocket.emit("message_backend_to_frontend", messageWithUsername);
       }
     }
     else {

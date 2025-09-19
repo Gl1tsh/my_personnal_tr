@@ -57,10 +57,15 @@ export function initLoginPage() {
 
       console.log('✅ Connexion réussie:', result);
       
-      // 🔑 SAUVEGARDER SEULEMENT LE TOKEN DE SESSION (pas de localStorage user)
+      // SAUVEGARDER SEULEMENT LE TOKEN DE SESSION (pas de localStorage user)
       if (result.sessionToken) {
         sessionStorage.setItem('authToken', result.sessionToken);
         console.log('🔐 Token de session sauvegardé');
+        
+        // Mettre à jour le pseudo sur le socket maintenant qu'on est connecté
+        const { updateUsernameOnServer } = await import('../socket.js');
+        updateUsernameOnServer(result.user.name);
+        console.log('🔄 Pseudo mis à jour sur le socket:', result.user.name);
       }
 
       // 🎉 Notification de succès
