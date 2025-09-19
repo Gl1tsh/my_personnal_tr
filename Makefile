@@ -160,13 +160,13 @@ dev:
 			pkill -f "npm run chat" 2>/dev/null || true; \
 			pkill -f "vite" 2>/dev/null || true; \
 			sleep 1; \
-			printf "\033[32m\033[1m ✅ Tous les ports ont été libérés\033[0m\n"; \
-			printf "\n"; \
 			printf "\033[33m\033[1m ╔══════════════════════════════════════════════════════════════╗\033[0m\n"; \
 			printf "\033[33m\033[1m ║                        👋 ARRÊT PROPRE 👋                    ║\033[0m\n"; \
 			printf "\033[33m\033[1m ╠══════════════════════════════════════════════════════════════╣\033[0m\n"; \
 			printf "\033[33m\033[1m ║                                                              ║\033[0m\n"; \
+			printf "\033[33m\033[1m ║\033[0m  \033[32m\033[1m✅ Tous les ports ont été libérés\033[0m                           \033[33m\033[1m║\033[0m\n"; \
 			printf "\033[33m\033[1m ║\033[0m  \033[32m\033[1m✅ Serveurs arrêtés correctement\033[0m                            \033[33m\033[1m║\033[0m\n"; \
+			printf "\033[33m\033[1m ║                                                              ║\033[0m\n"; \
 			printf "\033[33m\033[1m ║\033[0m  \033[36m\033[1m⚡ Tapez make pour relancer le menu\033[0m                         \033[33m\033[1m║\033[0m\n"; \
 			printf "\033[33m\033[1m ║                                                              ║\033[0m\n"; \
 			printf "\033[33m\033[1m ╚══════════════════════════════════════════════════════════════╝\033[0m\n"; \
@@ -215,11 +215,8 @@ install:
 
 clean:
 	@echo ""
-	@echo "$(RED)$(BOLD) ╔════════════════════════════════════════════════════════════$(RESET)"
-	@echo "$(RED)$(BOLD) ║                    🧹 NETTOYAGE COMPLET                    $(RESET)"
-	@echo "$(RED)$(BOLD) ╠════════════════════════════════════════════════════════════$(RESET)"
-	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
-	@echo "$(YELLOW) ║  🔫 Libération des ports...                               $(RESET)"
+	@echo "$(RED)$(BOLD) 🧹 Nettoyage en cours...$(RESET)"
+	@echo ""
 ifeq ($(OS),Windows_NT)
 	@$(KILL_PORTS) > nul 2>&1
 else
@@ -228,33 +225,29 @@ else
 	@$(KILL_3002) > /dev/null 2>&1
 endif
 	@$(WAIT) > /dev/null 2>&1
-	@echo "$(GREEN) ║  ✓ Port 3000 libéré                                       $(RESET)"
-	@echo "$(GREEN) ║  ✓ Port 3001 libéré                                       $(RESET)"
-	@echo "$(GREEN) ║  ✓ Port 3002 libéré                                       $(RESET)"
-	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
-	@echo "$(YELLOW) ║  🗑️  Suppression des fichiers build...                    $(RESET)"
 ifeq ($(OS),Windows_NT)
 	@if exist "$(BACK_DIR)\dist" rmdir /S /Q "$(BACK_DIR)\dist" 2>nul
 	@if exist "$(FRONT_DIR)\dist" rmdir /S /Q "$(FRONT_DIR)\dist" 2>nul
-else
-	@$(RM) $(BACK_DIR)/dist 2>/dev/null || true
-	@$(RM) $(FRONT_DIR)/dist 2>/dev/null || true
-endif
-	@echo "$(GREEN) ║  ✓ Fichiers build supprimés                               $(RESET)"
-	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
-	@echo "$(YELLOW) ║  📁 Suppression des node_modules...                       $(RESET)"
-ifeq ($(OS),Windows_NT)
 	@if exist "$(BACK_DIR)\node_modules" rmdir /S /Q "$(BACK_DIR)\node_modules" 2>nul
 	@if exist "$(FRONT_DIR)\node_modules" rmdir /S /Q "$(FRONT_DIR)\node_modules" 2>nul
 else
+	@$(RM) $(BACK_DIR)/dist 2>/dev/null || true
+	@$(RM) $(FRONT_DIR)/dist 2>/dev/null || true
 	@$(RM) $(BACK_DIR)/node_modules 2>/dev/null || true
 	@$(RM) $(FRONT_DIR)/node_modules 2>/dev/null || true
 endif
-	@echo "$(GREEN) ║  ✓ node_modules supprimés                                 $(RESET)"
-	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
-	@echo "$(GREEN)$(BOLD) ║                    ✨ NETTOYAGE TERMINÉ !                  $(RESET)"
-	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
-	@echo "$(RED)$(BOLD) ╚════════════════════════════════════════════════════════════$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                        🧹 NETTOYAGE TERMINÉ 🧹               ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Ports 3000, 3001, 3002 libérés$(RESET)                           $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Fichiers build supprimés$(RESET)                                 $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Dossiers node_modules supprimés$(RESET)                          $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)⚡ Tapez make pour relancer le menu$(RESET)                         $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(CYAN)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
+	@echo ""
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #                            🔧 UTILITAIRES INTERNES
