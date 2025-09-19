@@ -53,8 +53,7 @@ menu:
 	@echo "$(WHITE) ║  $(BOLD)1.$(RESET) $(GREEN)Lancer l'application$(RESET)                                   $(CYAN)║$(RESET)"
 	@echo "$(WHITE) ║  $(BOLD)2.$(RESET) $(YELLOW)Installer les dépendances$(RESET)                              $(CYAN)║$(RESET)"
 	@echo "$(WHITE) ║  $(BOLD)3.$(RESET) $(RED)Nettoyer le projet$(RESET)                                     $(CYAN)║$(RESET)"
-	@echo "$(WHITE) ║  $(BOLD)4.$(RESET) $(BLUE)Vérifier l'état des ports$(RESET)                              $(CYAN)║$(RESET)"
-	@echo "$(WHITE) ║  $(BOLD)5.$(RESET) $(RED)Vider la base de données$(RESET)                               $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(WHITE) ║  $(BOLD)4.$(RESET) $(RED)Vider la base de données$(RESET)                               $(CYAN)$(BOLD)║$(RESET)"
 	@echo "$(WHITE) ║  $(BOLD)0.$(RESET) $(DIM)Quitter$(RESET)                                                $(CYAN)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                            ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╠════════════════════════════════════════════════════════════╣$(RESET)"
@@ -68,10 +67,9 @@ menu:
 			1) echo ""; make dev; break ;; \
 			2) echo ""; make install; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
 			3) echo ""; make clean; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
-			4) echo ""; make status; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
-			5) echo ""; make reset-db; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
+			4) echo ""; make reset-db; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
 			0) echo "$(GREEN)$(BOLD)Au revoir ! 👋$(RESET)"; break ;; \
-			*) echo "$(RED)❌ Choix invalide ! Veuillez choisir entre 0-5.$(RESET)"; echo "" ;; \
+			*) echo "$(RED)❌ Choix invalide ! Veuillez choisir entre 0-4.$(RESET)"; echo "" ;; \
 		esac \
 	done
 
@@ -256,24 +254,6 @@ endif
 	@echo "$(RED)$(BOLD) ║                                                            $(RESET)"
 	@echo "$(RED)$(BOLD) ╚════════════════════════════════════════════════════════════$(RESET)"
 
-status:
-	@echo ""
-	@echo "$(BLUE)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
-	@echo "$(BLUE)$(BOLD) ║                      📊 ÉTAT DES PORTS 📊                    ║$(RESET)"
-	@echo "$(BLUE)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
-	@echo "$(BLUE)$(BOLD) ║                                                              ║$(RESET)"
-ifeq ($(OS),Windows_NT)
-	@netstat -ano | findstr :3000 > nul && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3000: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3000: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
-	@netstat -ano | findstr :3001 > nul && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3001: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3001: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
-	@netstat -ano | findstr :3002 > nul && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3002: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3002: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
-else
-	@lsof -i:3000 > /dev/null 2>&1 && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3000: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3000: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
-	@lsof -i:3001 > /dev/null 2>&1 && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3001: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3001: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
-	@lsof -i:3002 > /dev/null 2>&1 && echo "$(BLUE)$(BOLD) ║$(RESET)  $(RED)$(BOLD)❌ Port 3002: OCCUPÉ$(RESET)                                    $(BLUE)$(BOLD)║$(RESET)" || echo "$(BLUE)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Port 3002: libre$(RESET)                                       $(BLUE)$(BOLD)║$(RESET)"
-endif
-	@echo "$(BLUE)$(BOLD) ║                                                              ║$(RESET)"
-	@echo "$(BLUE)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
-
 # ═══════════════════════════════════════════════════════════════════════════════
 #                            🔧 UTILITAIRES INTERNES
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -322,4 +302,4 @@ else
 	@echo "$(YELLOW)Use 'make clean' instead$(RESET)"
 endif
 
-.PHONY: help dev install clean nuke status kill-ports reset-db
+.PHONY: help dev install clean nuke kill-ports reset-db
