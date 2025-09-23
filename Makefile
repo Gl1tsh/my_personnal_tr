@@ -232,20 +232,21 @@ endif
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Reset complet de la base de données
+
 reset-db: kill-ports
 	@echo ""
 	@echo "$(RED)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
 	@echo "$(RED)$(BOLD) ║                    💣 RESET BASE DE DONNÉES 💣               ║$(RESET)"
 	@echo "$(RED)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
 	@echo ""
-ifeq ($(OS),Windows_NT)
-	@powershell -Command "& { if (Test-Path 'backend/database.sqlite') { Remove-Item 'backend/database.sqlite' -Force; Write-Host 'Database file deleted' -ForegroundColor Green } else { Write-Host 'No database file found' -ForegroundColor Yellow } }"
-	@powershell -Command "& { Get-ChildItem 'backend' -Filter '*.db' -ErrorAction SilentlyContinue | ForEach-Object { Remove-Item $_.FullName -Force; Write-Host \"Deleted: $$($_.Name)\" -ForegroundColor Red } }"
-	@powershell -Command "& { Get-ChildItem 'backend' -Filter '*.sqlite*' -ErrorAction SilentlyContinue | ForEach-Object { Remove-Item $_.FullName -Force; Write-Host \"Deleted: $$($_.Name)\" -ForegroundColor Red } }"
-else
+	@echo "Killing all processes on ports 3000, 3001, 3002..."
+	@lsof -ti:3000 | xargs -r kill -9 2>/dev/null || true
+	@lsof -ti:3001 | xargs -r kill -9 2>/dev/null || true
+	@lsof -ti:3002 | xargs -r kill -9 2>/dev/null || true
+	@sleep 1
+	@echo "Cleaning database files..."
 	@rm -f $(BACK_DIR)/database.sqlite $(BACK_DIR)/*.db $(BACK_DIR)/*.sqlite* 2>/dev/null || true
 	@echo "$(GREEN) ✓ Database files removed$(RESET)"
-endif
 	@echo "$(GREEN)$(BOLD) ✅ Base de données réinitialisée !$(RESET)"
 	@echo ""
 
