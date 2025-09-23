@@ -63,35 +63,43 @@ export async function initChatPage() {
   };
 
   window.addEventListener('user_list', (event: any) => {
+    // Debug: print our socket id and all user ids
+    console.log('[DEBUG] My socket.id:', socket.id);
+    console.log('[DEBUG] User list:', event.detail.map((u: any) => u.id));
+
     // Trouver notre pseudo réel dans la liste
     const ourUserInfo = event.detail.find((user: any) => user.id === socket.id);
     if (ourUserInfo && ourUserInfo.username) {
       username = ourUserInfo.username;
       console.log('👤 Pseudo mis à jour depuis le serveur:', username);
     }
-    
+
     // Mettre à jour la liste des utilisateurs dans l'interface
     userList.innerHTML = '';
     for (const userInfo of event.detail) {
       // userInfo contient maintenant {id: string, username: string}
       // Ne pas afficher notre propre socket ID dans la liste
-      if (userInfo.id === socket.id) continue;
-      
+      if (
+        userInfo.id === socket.id ||
+        userInfo.username === username ||
+        (typeof userInfo.username === 'string' && userInfo.username.startsWith('BonjourPage'))
+      ) continue;
+
       const ul = document.createElement('div');
       ul.className = 'p-2 hover:bg-gray-700 cursor-pointer rounded';
       ul.textContent = userInfo.username;
-      
+
       const chatButton = document.createElement('span');
       chatButton.textContent = " 💬";
       chatButton.className = 'ml-2 text-blue-400 hover:text-blue-300 cursor-pointer';
       ul.appendChild(chatButton);
-      
+
       chatButton.onclick = (e) => {
         e.stopPropagation();
         createDmTab(userInfo.id, userInfo.username);
         switchTo(userInfo.id);
       };
-      
+
       ul.onclick = () => {
         localStorage.setItem('dmTarget', userInfo.id);
         window.location.hash = '#profile';
