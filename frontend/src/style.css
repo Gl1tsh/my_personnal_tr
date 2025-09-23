@@ -222,6 +222,17 @@ body {
   color: var(--text-primary);
 }
 
+.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--accent-danger);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
 .btn-lg {
   padding: var(--space-lg) var(--space-xl);
   font-size: var(--text-base);
