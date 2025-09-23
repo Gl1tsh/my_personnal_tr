@@ -1,7 +1,8 @@
-/* eslint-disable no-undef */
+﻿/* eslint-disable no-undef */
 import { socket, sendMessageToBackend, updateUsernameOnServer } from '../socket.js';
+import { setGameMode } from '../game/gameState.js';
 
-type Message = { from: string; text: string };
+type Message = { from: string; text: string; originalFrom?: string };
 type History = { [user: string]: Message[] };
 
 // Fonction pour récupérer le profil utilisateur via l'API centralisée
@@ -24,7 +25,7 @@ async function getUserProfile() {
     const result = await response.json();
     return result.user;
   } catch (error) {
-    console.error('❌ Erreur récupération profil chat:', error);
+    console.error(' Erreur récupération profil chat:', error);
     return null;
   }
 }
@@ -49,12 +50,12 @@ export async function initChatPage() {
   const userProfile = await getUserProfile();
   let username: string = userProfile ? userProfile.name : `User_${socket.id?.substring(0, 6) || 'Unknown'}`;
   
-  console.log('👤 Utilisateur chat:', username);
+  console.log(' Utilisateur chat:', username);
 
-  // 🔄 Forcer la mise à jour du pseudo sur le socket si on est connecté
+  //  Forcer la mise à jour du pseudo sur le socket si on est connecté
   if (userProfile && userProfile.name) {
     updateUsernameOnServer(userProfile.name);
-    console.log('🔄 Mise à jour forcée du pseudo sur le socket:', userProfile.name);
+    console.log(' Mise à jour forcée du pseudo sur le socket:', userProfile.name);
   }
 
   const blockedUsers = new Set<string>(JSON.parse(localStorage.getItem('blockedUsers') || '[]'));
@@ -71,7 +72,7 @@ export async function initChatPage() {
     const ourUserInfo = event.detail.find((user: any) => user.id === socket.id);
     if (ourUserInfo && ourUserInfo.username) {
       username = ourUserInfo.username;
-      console.log('👤 Pseudo mis à jour depuis le serveur:', username);
+      console.log(' Pseudo mis à jour depuis le serveur:', username);
     }
 
     // Mettre à jour la liste des utilisateurs dans l'interface
@@ -125,8 +126,9 @@ export async function initChatPage() {
   inviteBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     console.log(`[DEBUG] inviteBtn click — invite -> ${current}`);
-    localStorage.setItem('gameInvite', current);
-    window.location.assign('/#game');
+    // Send a special invite message
+    const inviteText = `🎮 Wants to play Pong! Click here to join: [JOIN_GAME:${socket.id}]`;
+    sendMessageToBackend(current, inviteText);
   });
 
   form.onsubmit = (e) => {
@@ -169,7 +171,7 @@ export async function initChatPage() {
       history[target] = [];
     }
 
-  history[target].push({ from, text, originalFrom });
+    history[target].push({ from, text, originalFrom });
     if (target === current)
       render();
   });
@@ -222,7 +224,7 @@ export async function initChatPage() {
   }
 
   function render() {
-  titleElem.textContent = (current === '') ? '# general' : `@ ${getUsernameById(current)}`;
+    titleElem.textContent = (current === '') ? '# general' : `@ ${getUsernameById(current)}`;
 
     if (current === '') {
       blockBtn.style.display = 'none';
@@ -247,9 +249,33 @@ export async function initChatPage() {
         message.from === username
           ? 'self-end bg-blue-500 text-white p-2 rounded'
           : 'self-start bg-gray-800 text-gray-100 p-2 rounded';
-      element.innerHTML = `<strong>${message.from}:</strong> ${message.text}`;
+      // Check for invite
+      if (message.text.includes('[JOIN_GAME:')) {
+        const joinMatch = message.text.match(/\[JOIN_GAME:([^\]]+)\]/);
+        if (joinMatch) {
+          const hostId = joinMatch[1];
+          const textBefore = message.text.replace(/\[JOIN_GAME:[^\]]+\]/, '');
+          element.innerHTML = `<strong>${message.from}:</strong> ${textBefore}<button class="join-game-btn bg-green-500 text-white px-2 py-1 rounded ml-2" data-host="${hostId}">Join Game</button>`;
+        } else {
+          element.innerHTML = `<strong>${message.from}:</strong> ${message.text}`;
+        }
+      } else {
+        element.innerHTML = `<strong>${message.from}:</strong> ${message.text}`;
+      }
       chatbox.appendChild(element);
     }
+    // Add event listeners for join buttons
+    chatbox.querySelectorAll('.join-game-btn').forEach((btn: HTMLElement) => {
+      btn.addEventListener('click', (e: Event) => {
+        const hostId = (e.target as HTMLElement).getAttribute('data-host');
+        if (hostId) {
+          // Set game mode to remote and navigate to game
+          setGameMode('1v1-remote');
+          localStorage.setItem('gameHost', hostId);
+          window.location.hash = '#game';
+        }
+      });
+    });
     chatbox.scrollTop = chatbox.scrollHeight;
 
     btnGen.classList.toggle('bg-blue-500', current === '');

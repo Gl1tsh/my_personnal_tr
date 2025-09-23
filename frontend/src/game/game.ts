@@ -1,5 +1,6 @@
 // src/game.ts
 import { getGameMode } from './gameState';
+import { socket } from '../socket';
 
 // ==================== Types pour organiser les données ====================
 interface Paddle {
@@ -43,6 +44,7 @@ let gameRunning = false;    // Jeu en cours
 let gamePaused = false;     // Jeu en pause
 let animationFrameId: number; // ID de l'animation
 let botDelay = 300;         // Délai initial du bot en ms (0.3 seconde, facile)
+let lastReceivedState: any = null; // For remote client
 
 // Stocker les touches
 const keys: Set<string> = new Set();
@@ -102,18 +104,41 @@ export function initGame() {
 
 // Gérer les touches du joueur
 function handleInput() {
-  // Contrôles du joueur 1 (toujours actifs)
-  if (keys.has('w') && leftPaddle.y > 0)
-    leftPaddle.y -= PADDLE_SPEED;
-  if (keys.has('s') && leftPaddle.y < PADDLE_MAX_Y)
-    leftPaddle.y += PADDLE_SPEED;
+  const mode = getGameMode();
+  const gameHost = localStorage.getItem('gameHost');
+  const isHost = !gameHost || gameHost === socket.id;
 
-  // Contrôles du joueur 2 (uniquement en mode 1v1 local)
-  if (getGameMode() === '1v1-local') {
+  if (mode === 'solo') {
+    // Contrôles du joueur (gauche)
+    if (keys.has('w') && leftPaddle.y > 0)
+      leftPaddle.y -= PADDLE_SPEED;
+    if (keys.has('s') && leftPaddle.y < PADDLE_MAX_Y)
+      leftPaddle.y += PADDLE_SPEED;
+  } else if (mode === '1v1-local') {
+    // Contrôles du joueur 1 (gauche)
+    if (keys.has('w') && leftPaddle.y > 0)
+      leftPaddle.y -= PADDLE_SPEED;
+    if (keys.has('s') && leftPaddle.y < PADDLE_MAX_Y)
+      leftPaddle.y += PADDLE_SPEED;
+    // Contrôles du joueur 2 (droite)
     if (keys.has('ArrowUp') && rightPaddle.y > 0)
       rightPaddle.y -= PADDLE_SPEED;
     if (keys.has('ArrowDown') && rightPaddle.y < PADDLE_MAX_Y)
       rightPaddle.y += PADDLE_SPEED;
+  } else if (mode === '1v1-remote') {
+    if (isHost) {
+      // Host controls left paddle
+      if (keys.has('w') && leftPaddle.y > 0)
+        leftPaddle.y -= PADDLE_SPEED;
+      if (keys.has('s') && leftPaddle.y < PADDLE_MAX_Y)
+        leftPaddle.y += PADDLE_SPEED;
+    } else {
+      // Client controls right paddle
+      if (keys.has('ArrowUp') && rightPaddle.y > 0)
+        rightPaddle.y -= PADDLE_SPEED;
+      if (keys.has('ArrowDown') && rightPaddle.y < PADDLE_MAX_Y)
+        rightPaddle.y += PADDLE_SPEED;
+    }
   }
 }
 
@@ -122,6 +147,29 @@ function handleInput() {
 function update() {
   if (!gameRunning || gamePaused)
     return;
+
+  const mode = getGameMode();
+  const gameHost = localStorage.getItem('gameHost');
+  const isHost = !gameHost || gameHost === socket.id;
+
+  if (mode === '1v1-remote' && !isHost) {
+    // Client: use received state
+    if (lastReceivedState) {
+      leftPaddle = lastReceivedState.leftPaddle;
+      rightPaddle = lastReceivedState.rightPaddle;
+      ball = lastReceivedState.ball;
+      gameRunning = lastReceivedState.gameRunning;
+      gamePaused = lastReceivedState.gamePaused;
+    }
+    handleInput(); // Only handle right paddle
+    // Send my paddle position to host
+    socket.emit('game_update', { rightPaddle });
+    draw();
+    animationFrameId = requestAnimationFrame(update);
+    return;
+  }
+
+  // Host logic...
 
   // Vérifier si un joueur a gagné
   if (leftPaddle.score >= WINNING_SCORE || rightPaddle.score >= WINNING_SCORE) {
@@ -148,17 +196,30 @@ function update() {
   // Points et reset
   if (ball.x < 0) {
     rightPaddle.score++;
-    adjustBotDifficulty();
+    if (mode === 'solo') adjustBotDifficulty();
     resetBall();
   }
   if (ball.x > CANVAS_WIDTH) {
     leftPaddle.score++;
-    adjustBotDifficulty();
+    if (mode === 'solo') adjustBotDifficulty();
     resetBall();
   }
 
   handleInput(); // Joueur
-  moveBot();     // Bot
+  if (mode === 'solo') moveBot();     // Bot
+
+  // For remote, send state
+  if (mode === '1v1-remote' && isHost) {
+    const gameState = {
+      leftPaddle,
+      rightPaddle,
+      ball,
+      gameRunning,
+      gamePaused
+    };
+    socket.emit('game_update', gameState);
+  }
+
   draw();
   animationFrameId = requestAnimationFrame(update);
 }
@@ -188,9 +249,45 @@ function startGame() {
       // Désactiver le bot pour le mode 1v1 local
       isBotEnabled = false;
     } else if (mode === '1v1-remote') {
-      // À implémenter plus tard
-      console.log('Mode 1v1 remote pas encore implémenté');
-      return;
+      console.log('Mode 1v1 remote démarré');
+      isBotEnabled = false;
+      const gameHost = localStorage.getItem('gameHost');
+      if (gameHost && gameHost !== socket.id) {
+        // I'm client, join the game
+        socket.emit('join_game', gameHost);
+        socket.on('game_started', (data) => {
+          console.log('Joined game with host:', data.hostId);
+          // Start game as client
+          gameRunning = true;
+          update();
+        });
+        socket.on('game_update', (data) => {
+          lastReceivedState = data;
+        });
+        socket.on('join_failed', (reason) => {
+          console.error('Failed to join game:', reason);
+          alert('Failed to join game: ' + reason);
+        });
+      } else {
+        // I'm host, wait for client
+        console.log('Waiting for opponent to join...');
+        socket.on('game_joined', (data) => {
+          console.log('Opponent joined:', data.clientId);
+          // Start game
+          gameRunning = true;
+          update();
+        });
+        socket.on('game_update', (data) => {
+          if (data.rightPaddle) {
+            rightPaddle = data.rightPaddle;
+          }
+        });
+      }
+      // Don't call update here for remote
+      (document.getElementById('startGameButton') as HTMLButtonElement).disabled = true;
+      (document.getElementById('pauseGameButton') as HTMLButtonElement).disabled = false;
+      messageElement.classList.remove('text-green-400', 'text-red-400');
+      return; // Don't call update at the end
     } else if (mode === 'tournament') {
       // À implémenter plus tard
       console.log('Mode tournoi pas encore implémenté');

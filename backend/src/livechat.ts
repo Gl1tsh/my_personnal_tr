@@ -9,6 +9,7 @@ const io = new Server<any>(httpServer, {
 
 const clients = new Map<String, Socket>();
 const usernames = new Map<String, String>(); // socket.id -> username
+const gameRooms = new Map<String, { host: string, client?: string, gameState?: any }>(); // roomId -> game info
 
 io.on("connection", (socket) => {
   console.log("📡 Client connecté:", socket.id);
@@ -24,6 +25,44 @@ io.on("connection", (socket) => {
     console.log(`👤 ${socket.id} -> ${username}`);
     usernames.set(socket.id, username);
     broadcastUserList();
+  });
+
+  // Handle game join
+  socket.on("join_game", (hostId: string) => {
+    let room = gameRooms.get(hostId);
+    if (!room) {
+      // Create room if not exists
+      room = { host: hostId };
+      gameRooms.set(hostId, room);
+    }
+    if (!room.client) {
+      room.client = socket.id;
+      gameRooms.set(hostId, room);
+      // Notify host that client joined
+      const hostSocket = clients.get(hostId);
+      if (hostSocket) {
+        hostSocket.emit("game_joined", { clientId: socket.id, clientUsername: usernames.get(socket.id) });
+      }
+      // Notify client
+      socket.emit("game_started", { hostId, hostUsername: usernames.get(hostId) });
+      console.log(`🎮 Game started: ${hostId} vs ${socket.id}`);
+    } else {
+      socket.emit("join_failed", "Game not available or already full");
+    }
+  });
+
+  // Handle game state updates
+  socket.on("game_update", (data: any) => {
+    const room = Array.from(gameRooms.values()).find(r => r.host === socket.id || r.client === socket.id);
+    if (room) {
+      room.gameState = data;
+      // Send to opponent
+      const opponentId = room.host === socket.id ? room.client : room.host;
+      const opponentSocket = clients.get(opponentId);
+      if (opponentSocket) {
+        opponentSocket.emit("game_update", data);
+      }
+    }
   });
 
   socket.on("message_frontend_to_backend", (msg: any) => {

@@ -8,6 +8,7 @@ export function initGameModesPage() {
     // The page content is now in HTML, we just need to handle the buttons
     const soloButton = document.getElementById('solo-mode');
     const vsLocalButton = document.getElementById('vs-local-mode');
+    const vsRemoteButton = document.getElementById('vs-remote-mode');
 
     if (soloButton) {
         soloButton.addEventListener('click', () => {
@@ -21,6 +22,14 @@ export function initGameModesPage() {
         vsLocalButton.addEventListener('click', () => {
             console.log('🎯 1v1 Local mode selected');
             setGameMode('1v1-local');
+            navigateToGame();
+        });
+    }
+
+    if (vsRemoteButton) {
+        vsRemoteButton.addEventListener('click', () => {
+            console.log('🎯 1v1 Remote mode selected');
+            setGameMode('1v1-remote');
             navigateToGame();
         });
     }
