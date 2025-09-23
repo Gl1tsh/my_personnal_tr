@@ -113,7 +113,9 @@ function populateFields(user: User): void {
 
 // === ACTIONS ===
 const actions = {
-  login: () => window.location.hash = '#login',
+  login: () => {
+    window.location.hash = '#login';
+  },
   logout: async () => {
     if (confirm('Déconnexion ?')) {
       sessionStorage.removeItem('authToken');
@@ -185,6 +187,13 @@ export async function initProfilePage(): Promise<void> {
   if (!currentUser) {
     console.log('❌ No user found, showing access denied');
     showState('denied');
+    // Attache explicitement le handler du bouton Login si présent
+    const loginBtn = document.querySelector('[data-state="denied"] [data-action="login"]');
+    if (loginBtn) {
+      loginBtn.addEventListener('click', () => {
+        window.location.hash = '#login';
+      });
+    }
     return;
   }
   
