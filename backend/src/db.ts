@@ -28,6 +28,29 @@ export function initDb(): void {
         console.log('✅ Table users prête')
       }
     })
+
+    // Créer la table matches pour l'historique des parties
+    db.run(`
+      CREATE TABLE IF NOT EXISTS matches (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        player1_id INTEGER NOT NULL,
+        player2_id INTEGER NOT NULL,
+        winner_id INTEGER,
+        loser_id INTEGER,
+        score VARCHAR(32),
+        played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(player1_id) REFERENCES users(id),
+        FOREIGN KEY(player2_id) REFERENCES users(id),
+        FOREIGN KEY(winner_id) REFERENCES users(id),
+        FOREIGN KEY(loser_id) REFERENCES users(id)
+      )
+    `, (err) => {
+      if (err) {
+        console.error('Erreur création table matches:', err.message)
+      } else {
+        console.log('✅ Table matches prête')
+      }
+    })
   })
 }
 
