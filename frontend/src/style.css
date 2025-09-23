@@ -58,22 +58,54 @@ body {
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
   margin: 0;
   padding: 0;
-  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.6;
 }
 
 /* Layout utilitaires */
 .container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--space-md);
+  padding: 0 var(--space-sm);
+  justify-content: center;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-sm);
+  justify-content: center;
+  box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 .page {
-  display: block;
-  min-height: calc(100vh - 80px);
-  padding: var(--space-xl) 0;
+  display: flex;
+  flex-direction: column;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-md) 0;
+  box-sizing: border-box;
+  justify-content: center;
+  overflow: hidden;
+  padding: var(--space-md) 0;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.profile-history-scroll {
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .page.hidden {
@@ -88,7 +120,8 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  height: 100vh;
+  overflow: hidden;
   height: 70px;
 }
 
@@ -99,6 +132,7 @@ body {
   height: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  overflow: hidden;
   padding: 0 var(--space-lg);
 }
 
@@ -143,7 +177,7 @@ body {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
-  padding: var(--space-xl);
+  padding: var(--space-md);
   box-shadow: var(--shadow-sm);
 }
 
@@ -454,29 +488,35 @@ body {
   .nav-links {
     gap: var(--space-md);
   }
-  
   .nav-link {
     padding: var(--space-sm);
     font-size: var(--text-xs);
   }
-  
   .grid-2,
   .grid-3 {
     grid-template-columns: 1fr;
   }
-  
   .chat-container {
     flex-direction: column;
     height: auto;
   }
-  
   .chat-sidebar {
     width: 100%;
     height: 150px;
   }
-  
   .container {
-    padding: 0 var(--space-sm);
+    padding: 0 var(--space-xs);
+    height: 100%;
+    justify-content: center;
+  }
+  .page {
+    min-height: calc(100vh - 70px);
+    height: calc(100vh - 70px);
+    padding: var(--space-xs) 0;
+    justify-content: center;
+  }
+  .card {
+    padding: var(--space-sm);
   }
 }
 
