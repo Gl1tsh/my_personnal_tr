@@ -27,11 +27,8 @@ const start = async () => {
     console.log('✅ Gestionnaires de routes enregistrés');
 
     // 5. Démarrer le serveur
-    await server.listen({ port: 3001 });
-
-    const address = server.server.address();
-    const port = typeof address === 'string' ? address : address?.port;
-    console.log(`🚀 Serveur démarré sur le port ${port}`);
+    await server.listen({ port: 3001, host: '0.0.0.0' });
+    console.log(`🚀 Serveur démarré sur http://localhost:3001`);
 
   } catch (err) {
     server.log.error(err);
