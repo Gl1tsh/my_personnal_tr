@@ -1,7 +1,8 @@
 // backend/src/handlers/userHandlers.ts
 import { FastifyInstance, RouteShorthandOptions } from 'fastify';
 import { getDb } from '../db';
-import { getAllUsers, createUser, CreateUserData } from '../logic/userManager';
+import { getAllUsers, createUser, CreateUserData, updateUserName, deleteUser, updateUserProfile } from '../logic/userManager';
+import { validateSession, logoutUser } from '../authentication/loginManager';
 
 // Schémas de validation pour les requêtes
 const getUsersSchema: RouteShorthandOptions = {
@@ -67,6 +68,77 @@ const createUserSchema: RouteShorthandOptions = {
   }
 };
 
+const updateNameSchema: RouteShorthandOptions = {
+  schema: {
+    headers: {
+      type: 'object',
+      properties: {
+        authorization: { type: 'string' }
+      },
+      required: ['authorization']
+    },
+    body: {
+      type: 'object',
+      required: ['newName'],
+      properties: {
+        newName: { type: 'string', minLength: 1, maxLength: 50 }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          message: { type: 'string' }
+        }
+      },
+      400: {
+        type: 'object',
+        properties: {
+          error: { type: 'string' }
+        }
+      },
+      401: {
+        type: 'object',
+        properties: {
+          error: { type: 'string' }
+        }
+      }
+    }
+  }
+};
+
+const deleteAccountSchema: RouteShorthandOptions = {
+  schema: {
+    headers: {
+      type: 'object',
+      properties: {
+        authorization: { type: 'string' }
+      },
+      required: ['authorization']
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          message: { type: 'string' }
+        }
+      },
+      401: {
+        type: 'object',
+        properties: {
+          error: { type: 'string' }
+        }
+      },
+      500: {
+        type: 'object',
+        properties: {
+          error: { type: 'string' }
+        }
+      }
+    }
+  }
+};
+
 // Enregistrer toutes les routes utilisateurs
 export async function registerUserHandlers(fastify: FastifyInstance) {
   
@@ -96,5 +168,106 @@ export async function registerUserHandlers(fastify: FastifyInstance) {
     }
     
     reply.status(201).send({ message: 'Utilisateur créé', id: result.userId });
+  });
+
+  // Route PATCH /auth/profile/name - Modifier le pseudo de l'utilisateur connecté
+  fastify.patch('/auth/profile/name', updateNameSchema, async (request, reply) => {
+    // Vérifier l'authentification
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return reply.status(401).header('Content-Type', 'application/json').send({ error: 'Token manquant' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const session = validateSession(token);
+    
+    if (!session) {
+      return reply.status(401).header('Content-Type', 'application/json').send({ error: 'Session invalide' });
+    }
+
+    const { newName } = request.body as { newName: string };
+    const db = getDb();
+
+    const result = await updateUserName(db, session.userId, newName);
+
+    if (!result.success) {
+      const statusCode = result.error === 'Utilisateur non trouvé' ? 404 : 400;
+      return reply.status(statusCode).send({ error: result.error });
+    }
+    
+    reply.status(200).send({ message: 'Pseudo mis à jour avec succès' });
+  });
+
+  // Route DELETE /auth/profile - Supprimer complètement le compte utilisateur
+  fastify.delete('/auth/profile', deleteAccountSchema, async (request, reply) => {
+    // Vérifier l'authentification
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return reply.status(401).header('Content-Type', 'application/json').send({ error: 'Token manquant' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const session = validateSession(token);
+    
+    if (!session) {
+      return reply.status(401).header('Content-Type', 'application/json').send({ error: 'Session invalide' });
+    }
+
+    const db = getDb();
+
+    // Supprimer l'utilisateur de la base de données
+    const result = await deleteUser(db, session.userId);
+
+    if (!result.success) {
+      const statusCode = result.error === 'Utilisateur non trouvé' ? 404 : 500;
+      return reply.status(statusCode).send({ error: result.error });
+    }
+    
+    // Supprimer aussi la session active
+    logoutUser(token);
+    
+    reply.status(200).send({ message: 'Compte supprimé avec succès' });
+  });
+
+  // Route PATCH /auth/profile - Modifier toutes les infos utilisateur
+  fastify.patch('/auth/profile', {
+    schema: {
+      headers: {
+        type: 'object',
+        properties: { authorization: { type: 'string' } },
+        required: ['authorization']
+      },
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 50 },
+          email: { type: 'string', format: 'email' },
+          login: { type: 'string', minLength: 3, maxLength: 30 },
+          password: { type: 'string', minLength: 6 }
+        }
+      },
+      response: {
+        200: { type: 'object', properties: { message: { type: 'string' } } },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        401: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (request, reply) => {
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return reply.status(401).send({ error: 'Token manquant' });
+    }
+    const token = authHeader.split(' ')[1];
+    const session = validateSession(token);
+    if (!session) {
+      return reply.status(401).send({ error: 'Session invalide' });
+    }
+    const db = getDb();
+    const updates = request.body as { name?: string; email?: string; login?: string; password?: string };
+    const result = await updateUserProfile(db, session.userId, updates);
+    if (!result.success) {
+      return reply.status(400).send({ error: result.error });
+    }
+    reply.status(200).send({ message: 'Profil mis à jour avec succès' });
   });
 }

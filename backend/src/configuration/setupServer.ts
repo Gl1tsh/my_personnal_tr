@@ -10,7 +10,7 @@ export async function configureServer(fastify: FastifyInstance): Promise<void> {
     origin: true, // Autorise toutes les origines (pour le développement)
     credentials: true, // Permet l'envoi de cookies/tokens
     allowedHeaders: ['content-type', 'authorization'], // Headers autorisés
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'] // Méthodes HTTP autorisées
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'] // Méthodes HTTP autorisées
   });
 
   console.log('✅ Configuration CORS appliquée');
