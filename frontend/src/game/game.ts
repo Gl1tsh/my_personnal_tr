@@ -179,9 +179,12 @@ function update() {
       animationFrameId = requestAnimationFrame(update);
       return;
     }
-    handleInput(); // Only handle right paddle
-    // Send my paddle position to host
-    socket.emit('game_update', { rightPaddle });
+    // Send input for right paddle
+    const input = {
+      up: keys.has('ArrowUp'),
+      down: keys.has('ArrowDown')
+    };
+    socket.emit('game_update', { input });
     draw();
     animationFrameId = requestAnimationFrame(update);
     return;
@@ -307,8 +310,9 @@ function startGame() {
           startCountdown();
         });
         socket.on('game_update', (data) => {
-          if (data.rightPaddle) {
-            rightPaddle = data.rightPaddle;
+          if (data.input) {
+            if (data.input.up && rightPaddle.y > 0) rightPaddle.y -= PADDLE_SPEED;
+            if (data.input.down && rightPaddle.y < PADDLE_MAX_Y) rightPaddle.y += PADDLE_SPEED;
           }
         });
       }
