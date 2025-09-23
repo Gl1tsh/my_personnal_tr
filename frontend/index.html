@@ -9,15 +9,15 @@
 <body class="bg-gray-900 text-white min-h-screen">
 
 <!-- ================================== NAVBAR ================================== -->
-    <nav class="bg-gray-800 border-b border-gray-700 fixed top-0 left-0 right-0 z-50 h-16">
-        <div class="flex items-center justify-between h-full max-w-6xl mx-auto px-6">
-            <a href="#home" class="text-xl font-semibold text-white no-underline" data-page="home">Transcendance</a>
-            <ul class="flex gap-6 list-none m-0 p-0">
-                <li><a href="#home" class="text-gray-300 hover:text-white text-sm font-medium px-3 py-2 rounded-md transition-colors no-underline" data-page="home">Home</a></li>
-                <li><a href="#game-modes" class="text-gray-300 hover:text-white text-sm font-medium px-3 py-2 rounded-md transition-colors no-underline" data-page="game-modes">Game</a></li>
-                <li><a href="#live-chat" class="text-gray-300 hover:text-white text-sm font-medium px-3 py-2 rounded-md transition-colors no-underline" data-page="live-chat">Chat</a></li>
-                <li><a href="#profile" class="text-gray-300 hover:text-white text-sm font-medium px-3 py-2 rounded-md transition-colors no-underline" data-page="profile">Profile</a></li>
-                <li><a href="#login" class="text-gray-300 hover:text-white text-sm font-medium px-3 py-2 rounded-md transition-colors no-underline" data-page="login">Login</a></li>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="#home" class="nav-logo" data-page="home">Transcendance</a>
+            <ul class="nav-links">
+                <li><a href="#home" class="nav-link" data-page="home">Home</a></li>
+                <li><a href="#game-modes" class="nav-link" data-page="game-modes">Game</a></li>
+                <li><a href="#live-chat" class="nav-link" data-page="live-chat">Chat</a></li>
+                <li><a href="#profile" class="nav-link" data-page="profile">Profile</a></li>
+                <li><a href="#login" class="nav-link" data-page="login">Login</a></li>
             </ul>
         </div>
     </nav>
@@ -126,20 +126,20 @@
 <!-- ================================== PROFIL PAGE ================================== -->
         <section id="profile" class="page hidden">
             <div class="container">
-                <!-- État loading -->
+                <!-- Loading state -->
                 <div data-state="loading" class="card text-center hidden" style="max-width: 400px; margin: 0 auto;">
-                    <div class="text-xl">⏳ Chargement...</div>
+                    <div class="text-xl">⏳ Loading...</div>
                 </div>
 
-                <!-- État accès refusé -->
+                <!-- Access denied state -->
                 <div data-state="denied" class="card text-center hidden" style="max-width: 400px; margin: 0 auto;">
-                    <div class="text-xl mb-lg">🔒 Accès refusé</div>
-                    <button data-action="login" class="btn btn-primary">Se connecter</button>
+                    <div class="text-xl mb-lg">🔒 Access denied</div>
+                    <button data-action="login" class="btn btn-primary">Login</button>
                 </div>
 
-                <!-- Profil principal -->
+                <!-- Main profile -->
                 <div data-state="main" class="card hidden" style="max-width: 1000px; margin: 0 auto;">
-                    <!-- Header avec avatar et boutons principaux -->
+                    <!-- Header with avatar and main buttons -->
                     <div class="flex items-center justify-between mb-xl">
                         <div class="flex items-center gap-lg">
                             <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border-primary);">
@@ -151,34 +151,34 @@
                                 <div data-field="info" class="text-muted text-xs"></div>
                             </div>
                         </div>
-                        <!-- Boutons principaux groupés -->
+                        <!-- Main buttons grouped -->
                         <div class="flex gap-md">
-                            <button data-action="edit" class="btn btn-secondary"> ⚙️ Modifier </button>
-                            <button data-action="logout" class="btn btn-danger"> 🚪 Déconnexion </button>
+                            <button data-action="edit" class="btn btn-secondary"> ⚙️ Edit </button>
+                            <button data-action="logout" class="btn btn-danger">🚪 Logout </button>
                         </div>
                     </div>
 
                     <div class="grid grid-2 gap-xl">
-                        <!-- Statistiques -->
+                        <!-- Statistics -->
                         <div>
-                            <h3 class="text-lg font-semibold mb-lg">📊 Statistiques</h3>
+                            <h3 class="text-lg font-semibold mb-lg">📊 Statistics</h3>
                             <div class="grid grid-3 gap-md">
                                 <div class="card p-lg text-center">
                                     <div data-field="stat-rank" class="text-2xl font-bold mb-sm"></div>
-                                    <div class="text-muted text-xs">Rang</div>
+                                    <div class="text-muted text-xs">Rank</div>
                                 </div>
                                 <div class="card p-lg text-center">
                                     <div class="text-2xl font-bold mb-sm">0</div>
-                                    <div class="text-muted text-xs">Victoires</div>
+                                    <div class="text-muted text-xs">Wins</div>
                                 </div>
                                 <div class="card p-lg text-center">
                                     <div class="text-2xl font-bold mb-sm">0</div>
-                                    <div class="text-muted text-xs">Défaites</div>
+                                    <div class="text-muted text-xs">Losses</div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Actions de navigation -->
+                        <!-- Navigation actions -->
                         <div>
                             <h3 class="text-lg font-semibold mb-lg">🎮 Navigation</h3>
                             <div class="space-y-md">
@@ -186,8 +186,8 @@
                                     <div class="flex items-center gap-md">
                                         <span class="text-xl">💬</span>
                                         <div>
-                                            <div class="font-semibold">Chat en Direct</div>
-                                            <div class="text-xs text-muted">Discuter avec les autres joueurs</div>
+                                            <div class="font-semibold">Live Chat</div>
+                                            <div class="text-xs text-muted">Chat with other players</div>
                                         </div>
                                     </div>
                                 </button>
@@ -195,8 +195,8 @@
                                     <div class="flex items-center gap-md">
                                         <span class="text-xl">⚔️</span>
                                         <div>
-                                            <div class="font-semibold">Modes de Jeu</div>
-                                            <div class="text-xs text-muted">Commencer une partie</div>
+                                            <div class="font-semibold">Game Modes</div>
+                                            <div class="text-xs text-muted">Start a match</div>
                                         </div>
                                     </div>
                                 </button>
@@ -204,46 +204,46 @@
                         </div>
                     </div>
 
-                    <!-- Historique des matchs -->
-                    <div class="mt-8 pt-6 border-t border-white/10">
-                        <h3 class="text-lg font-semibold text-white/90 mb-4">� Derniers Matchs</h3>
-                        <div class="text-center text-white/60 py-8 glass-morphism rounded border border-white/5">
-                            <div class="text-4xl mb-2">🎮</div>
-                            <p class="mb-2">Aucun match joué pour le moment</p>
-                            <a href="#game-modes" class="text-white/80 hover:text-white underline">Commencer à jouer</a>
+                    <!-- Match history -->
+                    <div class="mt-xl pt-xl" style="border-top: 1px solid var(--border-primary);">
+                        <h3 class="text-lg font-semibold mb-lg">🏆 Recent Matches</h3>
+                        <div class="card text-center p-xl text-muted">
+                            <div class="text-4xl mb-md">🎮</div>
+                            <p class="mb-md">No matches played yet</p>
+                            <a href="#game-modes" class="text-primary" style="text-decoration: underline;">Start playing</a>
                         </div>
                     </div>
                 </div>
 
-                <!-- Formulaire d'édition -->
+                <!-- Edit form -->
                 <form data-state="edit" class="card hidden" style="max-width: 600px; margin: 0 auto;">
                     <div class="flex items-center justify-between mb-lg">
-                        <h4 class="text-xl font-semibold">⚙️ Modifier le Profil</h4>
-                        <button type="button" data-action="cancel" class="btn btn-sm btn-ghost"> ✕ Fermer </button>
+                        <h4 class="text-xl font-semibold">⚙️ Edit Profile</h4>
+                        <button type="button" data-action="cancel" class="btn btn-sm btn-ghost"> ✕ Close </button>
                     </div>
                     
                     <div class="grid grid-2 gap-lg">
                         <div class="form-group">
-                            <label class="form-label">Pseudo</label>
-                            <input type="text" name="name" data-field="edit-name" placeholder="Votre pseudo" class="form-input" />
+                            <label class="form-label">Username</label>
+                            <input type="text" name="name" data-field="edit-name" placeholder="Your username" class="form-input" />
                         </div>
                         <div class="form-group">
                             <label class="form-label">Email</label>
-                            <input type="email" name="email" data-field="edit-email" placeholder="votre@email.com" class="form-input" />
+                            <input type="email" name="email" data-field="edit-email" placeholder="your@email.com" class="form-input" />
                         </div>
                         <div class="form-group">
                             <label class="form-label">Login</label>
-                            <input type="text" name="login" data-field="edit-login" placeholder="Nom d'utilisateur" class="form-input" />
+                            <input type="text" name="login" data-field="edit-login" placeholder="Login" class="form-input" />
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Nouveau mot de passe</label>
-                            <input type="password" name="password" placeholder="Laisser vide si inchangé" class="form-input" />
+                            <label class="form-label">New password</label>
+                            <input type="password" name="password" placeholder="Leave blank to keep current" class="form-input" />
                         </div>
                     </div>
                     
                     <div class="flex gap-md mt-xl">
-                        <button type="submit" class="btn btn-primary" style="flex: 1;"> ✅ Enregistrer </button>
-                        <button type="button" data-action="delete" class="btn btn-danger"> 🗑️ Supprimer le compte </button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;"> ✅ Save </button>
+                        <button type="button" data-action="delete" class="btn btn-danger"> 🗑️ Delete account </button>
                     </div>
                 </form>
             </div>
