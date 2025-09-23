@@ -45,6 +45,7 @@ let gamePaused = false;     // Jeu en pause
 let animationFrameId: number; // ID de l'animation
 let botDelay = 300;         // Délai initial du bot en ms (0.3 seconde, facile)
 let lastReceivedState: any = null; // For remote client
+let countdown: number | null = null; // Countdown before game starts
 
 // Stocker les touches
 const keys: Set<string> = new Set();
@@ -70,6 +71,16 @@ function draw() {
   ctx.font = '30px Arial';
   ctx.fillText(leftPaddle.score.toString(), SCORE_LEFT_X, 50);
   ctx.fillText(rightPaddle.score.toString(), SCORE_RIGHT_X, 50);
+
+  // Display countdown if active
+  if (countdown !== null) {
+    ctx.font = '80px Arial';
+    ctx.fillStyle = 'yellow';
+    ctx.textAlign = 'center';
+    ctx.fillText(countdown.toString(), CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20);
+    ctx.textAlign = 'left'; // Reset
+    ctx.fillStyle = 'white'; // Reset
+  }
 }
 
 // Mettre à jour le texte d'instructions selon le mode
@@ -160,10 +171,24 @@ function update() {
       ball = lastReceivedState.ball;
       gameRunning = lastReceivedState.gameRunning;
       gamePaused = lastReceivedState.gamePaused;
+      countdown = lastReceivedState.countdown || null;
+    }
+    if (countdown !== null) {
+      // During countdown, just draw and continue loop
+      draw();
+      animationFrameId = requestAnimationFrame(update);
+      return;
     }
     handleInput(); // Only handle right paddle
     // Send my paddle position to host
     socket.emit('game_update', { rightPaddle });
+    draw();
+    animationFrameId = requestAnimationFrame(update);
+    return;
+  }
+
+  if (countdown !== null) {
+    // During countdown, just draw and continue loop
     draw();
     animationFrameId = requestAnimationFrame(update);
     return;
@@ -215,7 +240,8 @@ function update() {
       rightPaddle,
       ball,
       gameRunning,
-      gamePaused
+      gamePaused,
+      countdown
     };
     socket.emit('game_update', gameState);
   }
@@ -259,10 +285,13 @@ function startGame() {
           console.log('Joined game with host:', data.hostId);
           // Start game as client
           gameRunning = true;
-          update();
+          update(); // Start the update loop
         });
         socket.on('game_update', (data) => {
           lastReceivedState = data;
+          if (data.countdown !== undefined) {
+            countdown = data.countdown;
+          }
         });
         socket.on('join_failed', (reason) => {
           console.error('Failed to join game:', reason);
@@ -275,7 +304,7 @@ function startGame() {
           console.log('Opponent joined:', data.clientId);
           // Start game
           gameRunning = true;
-          update();
+          startCountdown();
         });
         socket.on('game_update', (data) => {
           if (data.rightPaddle) {
@@ -294,7 +323,7 @@ function startGame() {
       return;
     }
 
-    update();
+    startCountdown();
     (document.getElementById('startGameButton') as HTMLButtonElement).disabled = true;
     (document.getElementById('pauseGameButton') as HTMLButtonElement).disabled = false;
     messageElement.classList.remove('text-green-400', 'text-red-400');
@@ -315,6 +344,47 @@ function pauseGame() {
   }
 }
 
+// Démarrer le countdown avant le jeu
+function startCountdown() {
+  countdown = 3;
+  draw();
+  // Send initial countdown state for remote
+  if (getGameMode() === '1v1-remote' && localStorage.getItem('gameHost') === socket.id) {
+    const gameState = {
+      leftPaddle,
+      rightPaddle,
+      ball,
+      gameRunning,
+      gamePaused,
+      countdown
+    };
+    socket.emit('game_update', gameState);
+  }
+  const interval = setInterval(() => {
+    if (countdown !== null && countdown > 0) {
+      countdown--;
+      draw();
+      // Send updated countdown for remote
+      if (getGameMode() === '1v1-remote' && localStorage.getItem('gameHost') === socket.id) {
+        const gameState = {
+          leftPaddle,
+          rightPaddle,
+          ball,
+          gameRunning,
+          gamePaused,
+          countdown
+        };
+        socket.emit('game_update', gameState);
+      }
+    }
+    if (countdown === 0) {
+      clearInterval(interval);
+      countdown = null;
+      update();
+    }
+  }, 1000);
+}
+
 // ==================== RESET, CLEAN and END ====================
 // Réinitialiser la balle et les paddles après un goal
 function resetBall() {
@@ -333,6 +403,7 @@ function resetGameState() {
   ball = { x: BALL_CENTER_X, y: BALL_CENTER_Y, speed_x: BALL_SPEED, speed_y: BALL_SPEED };
   gameRunning = false;
   botDelay = 300; // Réinitialiser le délai du bot
+  countdown = null; // Reset countdown
   if (animationFrameId)
     cancelAnimationFrame(animationFrameId);
 }
