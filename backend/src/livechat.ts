@@ -65,12 +65,17 @@ io.on("connection", (socket) => {
 });
 
 function broadcastUserList() {
-  // Envoyer la liste des utilisateurs avec leurs vrais pseudos
-  const userListWithNames = Array.from(clients.keys()).map(socketId => ({
-    id: socketId,
-    username: usernames.get(socketId) || `User_${socketId.substring(0, 6)}`
-  }));
-  
+  // Envoyer la liste des utilisateurs avec leurs vrais pseudos, sans doublons
+  const seenUsernames = new Set<string>();
+  const userListWithNames = [];
+  for (const socketId of clients.keys()) {
+    const usernameRaw = usernames.get(socketId) || `User_${socketId.substring(0, 6)}`;
+    const username = String(usernameRaw);
+    if (!seenUsernames.has(username)) {
+      userListWithNames.push({ id: socketId, username });
+      seenUsernames.add(username);
+    }
+  }
   for (const clientSocket of clients.values()) {
     clientSocket.emit("user_list", userListWithNames);
   }

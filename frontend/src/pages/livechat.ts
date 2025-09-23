@@ -192,12 +192,25 @@ export async function initChatPage() {
     render();
   }
 
+  // Stocke la dernière liste d'utilisateurs reçue
+  let lastUserList: Array<{id: string, username: string}> = [];
+
+  window.addEventListener('user_list', (event: any) => {
+    lastUserList = event.detail;
+    // ...existing code...
+  });
+
+  function getUsernameById(id: string): string {
+    const user = lastUserList.find(u => u.id === id);
+    return user ? user.username : id;
+  }
+
   function createDmTab(id: string, displayName?: string) {
     if (dmList.querySelector(`#dm-tab-${id}`)) return;
     const tab = document.createElement('div');
     tab.className = 'p-2 hover:bg-gray-700 cursor-pointer rounded';
     tab.id = `dm-tab-${id}`;
-    tab.textContent = displayName || id;
+    tab.textContent = displayName || getUsernameById(id);
     tab.onclick = () => switchTo(id);
     dmList.appendChild(tab);
     history[id] = [];
@@ -209,7 +222,7 @@ export async function initChatPage() {
   }
 
   function render() {
-    titleElem.textContent = (current === '') ? '# general' : `@ ${current}`;
+  titleElem.textContent = (current === '') ? '# general' : `@ ${getUsernameById(current)}`;
 
     if (current === '') {
       blockBtn.style.display = 'none';
