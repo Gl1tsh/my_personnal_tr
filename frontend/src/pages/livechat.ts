@@ -169,7 +169,7 @@ export async function initChatPage() {
       history[target] = [];
     }
 
-    history[target].push({ from, text });
+  history[target].push({ from, text, originalFrom });
     if (target === current)
       render();
   });
@@ -238,7 +238,9 @@ export async function initChatPage() {
 
     chatbox.innerHTML = '';
     for (const message of (history[current] || [])) {
-      if (blockedUsers.has(message.from))
+      // On récupère l'id d'origine (originalFrom) pour le filtrage
+      const originalFrom = (message as any).originalFrom || message.from;
+      if (blockedUsers.has(originalFrom))
         continue;
       const element = document.createElement('div');
       element.className =
