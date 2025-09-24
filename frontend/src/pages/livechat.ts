@@ -102,7 +102,7 @@ export async function initChatPage() {
       };
 
       ul.onclick = () => {
-        localStorage.setItem('dmTarget', userInfo.id);
+        localStorage.setItem('dmTarget', userInfo.username);
         window.location.hash = '#profile';
       };
       userList.appendChild(ul);

@@ -12,6 +12,7 @@ const $$ = (selector: string): NodeListOf<Element> => document.querySelectorAll(
 
 // === DONNÉES ===
 let currentUser: User | null = null;
+let isOwnProfile: boolean = true;
 
 // === API ===
 async function fetchUser(): Promise<User | null> {
@@ -36,6 +37,19 @@ async function fetchUser(): Promise<User | null> {
   } catch (error) {
     console.error('❌ Profile API error:', error);
     return null;
+  }
+}
+
+async function fetchAllUsers(): Promise<User[]> {
+  try {
+    const response = await fetch('http://localhost:3001/users');
+    if (response.ok) {
+      return await response.json();
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return [];
   }
 }
 
@@ -177,7 +191,25 @@ export async function initProfilePage(): Promise<void> {
   console.log('👤 Initializing Profile page...');
   showState('loading');
   
-  currentUser = await fetchUser();
+  const dmTarget = localStorage.getItem('dmTarget');
+  if (dmTarget) {
+    localStorage.removeItem('dmTarget');
+    // Fetch all users and find the one with matching name
+    const allUsers = await fetchAllUsers();
+    const targetUser = allUsers.find(u => u.name === dmTarget);
+    if (targetUser) {
+      currentUser = targetUser;
+      isOwnProfile = false;
+    } else {
+      // Fallback to own profile
+      currentUser = await fetchUser();
+      isOwnProfile = true;
+    }
+  } else {
+    currentUser = await fetchUser();
+    isOwnProfile = true;
+  }
+  
   console.log('👤 Fetched user:', currentUser);
   
   if (!currentUser) {
@@ -195,6 +227,13 @@ export async function initProfilePage(): Promise<void> {
   
   populateFields(currentUser);
   showState('main');
+  if (!isOwnProfile) {
+    // Hide edit and delete buttons for other users' profiles
+    const editBtn = $('[data-action="edit"]') as HTMLElement;
+    const deleteBtn = $('[data-action="delete"]') as HTMLElement;
+    if (editBtn) editBtn.style.display = 'none';
+    if (deleteBtn) deleteBtn.style.display = 'none';
+  }
   setupEvents();
   console.log('✅ Profile page initialized successfully');
 }
