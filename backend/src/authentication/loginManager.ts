@@ -14,7 +14,6 @@ export interface User {
   name: string;
   login: string;
   email: string;
-  rank?: number;
   avatar?: string;
 }
 
@@ -109,7 +108,7 @@ export async function getUserProfile(
     const getUserById = (userId: number): Promise<any> => {
       return new Promise((resolve, reject) => {
         db.get(
-          'SELECT id, name, login, email, rank, avatar FROM users WHERE id = ?',
+          'SELECT id, name, login, email, avatar FROM users WHERE id = ?',
           [userId],
           (err, row) => {
             if (err) reject(err);
@@ -130,7 +129,6 @@ export async function getUserProfile(
       name: row.name,
       login: row.login,
       email: row.email,
-      rank: row.rank || 1,
       avatar: row.avatar ? Buffer.from(row.avatar).toString('base64') : null
     };
 

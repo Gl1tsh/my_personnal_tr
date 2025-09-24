@@ -16,7 +16,6 @@ const getUsersSchema: RouteShorthandOptions = {
             id: { type: 'integer' },
             name: { type: 'string' },
             login: { type: 'string' },
-            rank: { type: 'integer', nullable: true }, // rank peut être NULL dans la DB
             avatar: { type: 'string', nullable: true } // avatar en Base64, peut être NULL
           },
           required: ['id', 'name', 'login'] // Ces champs sont NOT NULL dans la DB

@@ -15,7 +15,6 @@ export interface UserData {
   id: number;
   name: string;
   login: string;
-  rank?: number;
   avatar?: string;
 }
 
@@ -25,7 +24,7 @@ export async function getAllUsers(db: Database): Promise<{ success: boolean; use
     // Promisifier db.all
     const getAllUsersQuery = (): Promise<any[]> => {
       return new Promise((resolve, reject) => {
-        db.all('SELECT id, name, login, rank, avatar FROM users', (err, rows) => {
+        db.all('SELECT id, name, login, avatar FROM users', (err, rows) => {
           if (err) reject(err);
           else resolve(rows as any[]);
         });
@@ -37,7 +36,6 @@ export async function getAllUsers(db: Database): Promise<{ success: boolean; use
       id: row.id,
       name: row.name,
       login: row.login,
-      rank: row.rank,
       avatar: row.avatar ? Buffer.from(row.avatar).toString('base64') : null
     }));
     
@@ -215,7 +213,6 @@ export async function updateUserProfile(
       values.push(updates.login.trim());
     }
     if (updates.password) {
-      const bcrypt = require('bcrypt');
       const hashed = await bcrypt.hash(updates.password, 10);
       fields.push('password = ?');
       values.push(hashed);

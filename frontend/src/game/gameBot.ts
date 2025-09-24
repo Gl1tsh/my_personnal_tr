@@ -8,7 +8,6 @@ export function moveBot() {
 
   // Simuler un délai (si le temps est écoulé, bouger)
   if (Math.random() < 0.2 * (1000 / gameState.botDelay)) { // Probabilité ajustée
-    console.log('Bot bouge, targetY:', targetVerticalPosition, 'currentY:', gameState.rightPaddle.y); // Débogage
     if (targetVerticalPosition > gameState.rightPaddle.y && gameState.rightPaddle.y < PADDLE_MAX_Y) {
       gameState.rightPaddle.y += PADDLE_SPEED;
     } else if (targetVerticalPosition < gameState.rightPaddle.y && gameState.rightPaddle.y > 0) {
@@ -27,5 +26,4 @@ export function adjustBotDifficulty() {
   } else {
     gameState.botDelay = 250; // Difficile (10+ points, fixé pour éviter l'inbattabilité)
   }
-  console.log('Nouveau délai du bot:', gameState.botDelay); // Débogage
 }

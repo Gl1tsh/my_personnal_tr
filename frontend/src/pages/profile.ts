@@ -3,7 +3,6 @@ interface User {
   name: string;
   login: string;
   email: string;
-  rank?: number;
   avatar?: string | null;
 }
 
@@ -88,14 +87,11 @@ function showState(state: 'loading' | 'denied' | 'main' | 'edit'): void {
 
 function populateFields(user: User): void {
   const avatar = user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.name}`;
-  const rank = user.rank || 1;
   
   const fields = {
     avatar: avatar,
     name: user.name,
-    rank: `Rang #${rank}`,
     info: `${user.login}  ${user.email}`,
-    'stat-rank': `#${rank}`,
     'edit-name': user.name,
     'edit-email': user.email,
     'edit-login': user.login

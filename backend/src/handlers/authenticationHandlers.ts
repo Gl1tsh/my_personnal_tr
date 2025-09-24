@@ -61,7 +61,6 @@ const profileSchema: RouteShorthandOptions = {
               name: { type: 'string' },
               login: { type: 'string' },
               email: { type: 'string' },
-              rank: { type: 'integer', nullable: true },
               avatar: { type: 'string', nullable: true }
             }
           }

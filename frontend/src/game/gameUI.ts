@@ -91,21 +91,16 @@ export function startGame() {
 
     // Configurer le jeu selon le mode
     if (mode === 'solo') {
-      console.log('Mode solo démarré, délai bot:', gameState.botDelay);
       // isBotEnabled = true; // Need to handle
     } else if (mode === '1v1-local') {
-      console.log('Mode 1v1 local démarré');
       // Désactiver le bot pour le mode 1v1 local
       // isBotEnabled = false;
     } else if (mode === '1v1-remote') {
-      console.log('Mode 1v1 remote démarré');
-      // isBotEnabled = false;
       const gameHost = localStorage.getItem('gameHost');
       if (gameHost && gameHost !== socket.id) {
         // I'm client, join the game
         socket.emit('join_game', gameHost);
-        socket.on('game_started', (data) => {
-          console.log('Joined game with host:', data.hostId);
+        socket.on('game_started', () => {
           // Start game as client
           gameState.gameRunning = true;
           update(); // Start the update loop
@@ -122,9 +117,7 @@ export function startGame() {
         });
       } else {
         // I'm host, wait for client
-        console.log('Waiting for opponent to join...');
-        socket.on('game_joined', (data) => {
-          console.log('Opponent joined:', data.clientId);
+        socket.on('game_joined', () => {
           // Start game
           gameState.gameRunning = true;
           startCountdown();
@@ -142,7 +135,6 @@ export function startGame() {
       return; // Don't call update at the end
     } else if (mode === 'tournament') {
       // À implémenter plus tard
-      console.log('Mode tournoi pas encore implémenté');
       return;
     }
 
@@ -231,6 +223,6 @@ export function endGame() {
     const chatNavLink = document.querySelector('[data-page="live-chat"]');
     if (chatNavLink) chatNavLink.classList.add('active');
     // Cleanup game
-    // cleanupGame(); // Need to import
+    cleanupGame();
   });
 }
