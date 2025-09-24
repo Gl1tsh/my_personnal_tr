@@ -144,33 +144,6 @@ export function startGame() {
   }
 }
 
-// Mettre en pause ou reprendre
-export function pauseGame() {
-  if (gameState.gameRunning) {
-    if (!gameState.gamePaused) {
-      gameState.gamePaused = true;
-      (document.getElementById('pauseGameButton') as HTMLButtonElement).textContent = 'Resume';
-    } else {
-      gameState.gamePaused = false;
-      (document.getElementById('pauseGameButton') as HTMLButtonElement).textContent = 'Pause';
-      update();
-    }
-  }
-}
-
-// Réinitialiser le jeu
-export function resetGame() {
-  resetGameState(); // Reset complet
-  gameState.gamePaused = false;
-  const messageElement = document.getElementById('gameMessageWinOrLose') as HTMLDivElement;
-  messageElement.classList.add('hidden');
-  messageElement.classList.remove('text-green-400', 'text-red-400');
-  (document.getElementById('pauseGameButton') as HTMLButtonElement).textContent = 'Pause';
-  (document.getElementById('pauseGameButton') as HTMLButtonElement).disabled = false; // Réactiver "Pause"
-  (document.getElementById('startGameButton') as HTMLButtonElement).disabled = false; // Réactiver "Start Game"
-  draw();
-}
-
 // Terminer la partie et afficher le message
 export function endGame() {
   gameState.gameRunning = false;
@@ -208,21 +181,30 @@ export function endGame() {
     };
     socket.emit('game_update', gameStateToSend);
   }
-  // Replace buttons with Leave button
-  const buttonsDiv = document.querySelector('.flex.justify-center.gap-md') as HTMLDivElement;
-  buttonsDiv.innerHTML = '<button id="leaveGameButton" class="btn btn-primary">Leave</button>';
-  const leaveButton = document.getElementById('leaveGameButton') as HTMLButtonElement;
-  leaveButton.addEventListener('click', () => {
-    // Navigate to livechat
-    window.history.pushState({ page: 'live-chat' }, '', '#live-chat');
-    document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
-    const livechatSection = document.getElementById('live-chat');
-    if (livechatSection) livechatSection.classList.remove('hidden');
-    // Update nav
-    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-    const chatNavLink = document.querySelector('[data-page="live-chat"]');
-    if (chatNavLink) chatNavLink.classList.add('active');
-    // Cleanup game
-    cleanupGame();
-  });
+  // Handle buttons based on mode
+  if (mode === '1v1-remote') {
+    // Replace buttons with Leave button
+    const buttonsDiv = document.querySelector('.flex.justify-center.gap-md') as HTMLDivElement;
+    buttonsDiv.innerHTML = '<button id="leaveGameButton" class="btn btn-primary">Leave</button>';
+    const leaveButton = document.getElementById('leaveGameButton') as HTMLButtonElement;
+    leaveButton.addEventListener('click', () => {
+      // Emit leave_game to reset the room
+      socket.emit('leave_game');
+      // Navigate to livechat
+      window.history.pushState({ page: 'live-chat' }, '', '#live-chat');
+      document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+      const livechatSection = document.getElementById('live-chat');
+      if (livechatSection) livechatSection.classList.remove('hidden');
+      // Update nav
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+      const chatNavLink = document.querySelector('[data-page="live-chat"]');
+      if (chatNavLink) chatNavLink.classList.add('active');
+      // Cleanup game
+      cleanupGame();
+    });
+  } else {
+    // For local and solo, enable start for replay
+    const startBtn = document.getElementById('startGameButton') as HTMLButtonElement;
+    if (startBtn) startBtn.disabled = false;
+  }
 }

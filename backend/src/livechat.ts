@@ -51,6 +51,18 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Handle leave game
+  socket.on("leave_game", () => {
+    // Find and delete the room where this socket is involved
+    for (const [hostId, room] of gameRooms) {
+      if (room.host === socket.id || room.client === socket.id) {
+        gameRooms.delete(hostId);
+        console.log(`🎮 Room cleared for ${socket.id}`);
+        break;
+      }
+    }
+  });
+
   // Handle game state updates
   socket.on("game_update", (data: any) => {
     const room = Array.from(gameRooms.values()).find(r => r.host === socket.id || r.client === socket.id);

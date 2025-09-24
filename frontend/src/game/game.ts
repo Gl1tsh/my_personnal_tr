@@ -18,12 +18,14 @@ export function initGame() {
   resetGameState();
   draw();
   updateInstructions(); // Mettre à jour les instructions dès l'initialisation
+  // Reset buttons to original state
+  const buttonsDiv = document.querySelector('.flex.justify-center.gap-md') as HTMLDivElement;
+  buttonsDiv.innerHTML = `
+    <button id="startGameButton" class="btn btn-primary">Start Game</button>
+  `;
+  // Add event listener
   const startButton = document.getElementById('startGameButton') as HTMLButtonElement;
   startButton.addEventListener('click', startGame);
-  const pauseButton = document.getElementById('pauseGameButton') as HTMLButtonElement;
-  pauseButton.style.display = 'none';
-  const resetButton = document.getElementById('resetGameButton') as HTMLButtonElement;
-  resetButton.style.display = 'none';
 }
 
 // Nettoyer
