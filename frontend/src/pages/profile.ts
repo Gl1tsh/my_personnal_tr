@@ -53,9 +53,9 @@ async function fetchAllUsers(): Promise<User[]> {
   }
 }
 
-async function updateUser(data: Partial<User>): Promise<boolean> {
+async function updateUser(data: Partial<User>): Promise<{ success: boolean; error?: string }> {
   const token = sessionStorage.getItem('authToken');
-  if (!token) return false;
+  if (!token) return { success: false, error: 'Token manquant' };
   
   try {
     const response = await fetch('http://localhost:3001/auth/profile', {
@@ -66,9 +66,14 @@ async function updateUser(data: Partial<User>): Promise<boolean> {
       },
       body: JSON.stringify(data)
     });
-    return response.ok;
+    if (response.ok) {
+      return { success: true };
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      return { success: false, error: errorData.error || 'Erreur modification' };
+    }
   } catch {
-    return false;
+    return { success: false, error: 'Erreur réseau' };
   }
 }
 
@@ -164,6 +169,12 @@ function setupEvents(): void {
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Saving...';
+    }
+    
     const formData = new FormData(form);
     const updates: Record<string, string> = {};
     
@@ -174,12 +185,23 @@ function setupEvents(): void {
       }
     });
     
-    if (Object.keys(updates).length === 0) return;
+    if (Object.keys(updates).length === 0) {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '✅ Save';
+      }
+      return;
+    }
     
-    if (await updateUser(updates)) {
+    const result = await updateUser(updates);
+    if (result.success) {
       await initProfilePage(); // Recharger
     } else {
-      alert('Erreur modification');
+      alert(result.error || 'Erreur modification');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '✅ Save';
+      }
     }
   });
 }

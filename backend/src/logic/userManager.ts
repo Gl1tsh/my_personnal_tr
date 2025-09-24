@@ -197,6 +197,45 @@ export async function updateUserProfile(
   updates: { name?: string; email?: string; login?: string; password?: string }
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Vérifier l'unicité du nom (pseudo) si fourni
+    if (updates.name) {
+      const existingName = await new Promise<any>((resolve, reject) => {
+        db.get('SELECT id FROM users WHERE name = ? AND id != ?', [updates.name.trim(), userId], (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+      if (existingName) {
+        return { success: false, error: 'Pseudo déjà utilisé' };
+      }
+    }
+
+    // Vérifier l'unicité du login si fourni
+    if (updates.login) {
+      const existingLogin = await new Promise<any>((resolve, reject) => {
+        db.get('SELECT id FROM users WHERE login = ? AND id != ?', [updates.login.trim(), userId], (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+      if (existingLogin) {
+        return { success: false, error: 'Login déjà utilisé' };
+      }
+    }
+
+    // Vérifier l'unicité de l'email si fourni
+    if (updates.email) {
+      const existingEmail = await new Promise<any>((resolve, reject) => {
+        db.get('SELECT id FROM users WHERE email = ? AND id != ?', [updates.email.trim(), userId], (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+      if (existingEmail) {
+        return { success: false, error: 'Email déjà utilisé' };
+      }
+    }
+
     // On construit dynamiquement la requête SQL
     const fields = [];
     const values = [];
