@@ -132,8 +132,6 @@ const actions = {
       window.location.hash = '#login';
     }
   },
-  chat: () => window.location.hash = '#live-chat',
-  game: () => window.location.hash = '#game-modes',
   edit: () => showState('edit'),
   cancel: () => showState('main'),
   delete: async () => {
@@ -192,6 +190,8 @@ export async function initProfilePage(): Promise<void> {
   showState('loading');
   
   const dmTarget = localStorage.getItem('dmTarget');
+  const ownUser = await fetchUser();
+  
   if (dmTarget) {
     localStorage.removeItem('dmTarget');
     // Fetch all users and find the one with matching name
@@ -199,14 +199,14 @@ export async function initProfilePage(): Promise<void> {
     const targetUser = allUsers.find(u => u.name === dmTarget);
     if (targetUser) {
       currentUser = targetUser;
-      isOwnProfile = false;
+      isOwnProfile = ownUser ? targetUser.id === ownUser.id : false;
     } else {
       // Fallback to own profile
-      currentUser = await fetchUser();
+      currentUser = ownUser;
       isOwnProfile = true;
     }
   } else {
-    currentUser = await fetchUser();
+    currentUser = ownUser;
     isOwnProfile = true;
   }
   
@@ -228,11 +228,21 @@ export async function initProfilePage(): Promise<void> {
   populateFields(currentUser);
   showState('main');
   if (!isOwnProfile) {
-    // Hide edit and delete buttons for other users' profiles
+    // Hide edit and delete buttons and info for other users' profiles
     const editBtn = $('[data-action="edit"]') as HTMLElement;
     const deleteBtn = $('[data-action="delete"]') as HTMLElement;
+    const infoEl = $('[data-field="info"]') as HTMLElement;
     if (editBtn) editBtn.style.display = 'none';
     if (deleteBtn) deleteBtn.style.display = 'none';
+    if (infoEl) infoEl.style.display = 'none';
+  } else {
+    // Ensure they are visible for own profile
+    const editBtn = $('[data-action="edit"]') as HTMLElement;
+    const deleteBtn = $('[data-action="delete"]') as HTMLElement;
+    const infoEl = $('[data-field="info"]') as HTMLElement;
+    if (editBtn) editBtn.style.display = 'block';
+    if (deleteBtn) deleteBtn.style.display = 'block';
+    if (infoEl) infoEl.style.display = 'block';
   }
   setupEvents();
   console.log('✅ Profile page initialized successfully');

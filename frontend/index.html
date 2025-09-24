@@ -148,13 +148,13 @@
                             </div>
                             <div>
                                 <h1 data-field="name" class="text-3xl font-bold mb-sm"></h1>
-                                <div data-field="info" class="text-muted text-xs"></div>
+                                <div data-field="info" class="text-muted text-xs mb-md"></div>
+                                <button data-action="edit" class="btn btn-secondary btn-sm"> ⚙️ Edit </button>
                             </div>
                         </div>
                         <!-- Main buttons grouped -->
                         <div class="flex gap-md">
-                            <button data-action="edit" class="btn btn-secondary"> ⚙️ Edit </button>
-                            <button data-action="logout" class="btn btn-danger">🚪 Logout </button>
+                            <button data-action="logout" class="btn btn-danger btn-sm">🚪 Logout </button>
                         </div>
                     </div>
 
@@ -174,39 +174,14 @@
                             </div>
                         </div>
 
-                        <!-- Navigation actions -->
+                        <!-- Match history placeholder -->
                         <div>
-                            <h3 class="text-lg font-semibold mb-lg">🎮 Navigation</h3>
-                            <div class="space-y-md">
-                                <button data-action="chat" class="card btn-ghost text-left" style="width: 100%; padding: var(--space-lg);">
-                                    <div class="flex items-center gap-md">
-                                        <span class="text-xl">💬</span>
-                                        <div>
-                                            <div class="font-semibold">Live Chat</div>
-                                            <div class="text-xs text-muted">Chat with other players</div>
-                                        </div>
-                                    </div>
-                                </button>
-                                <button data-action="game" class="card btn-ghost text-left" style="width: 100%; padding: var(--space-lg);">
-                                    <div class="flex items-center gap-md">
-                                        <span class="text-xl">⚔️</span>
-                                        <div>
-                                            <div class="font-semibold">Game Modes</div>
-                                            <div class="text-xs text-muted">Start a match</div>
-                                        </div>
-                                    </div>
-                                </button>
+                            <h3 class="text-lg font-semibold mb-lg">🏆 Recent Matches</h3>
+                            <div class="card text-center p-xl text-muted profile-history-scroll">
+                                <div class="text-4xl mb-md">🎮</div>
+                                <p class="mb-md">No matches played yet</p>
+                                <a href="#game-modes" class="text-primary" style="text-decoration: underline;">Start playing</a>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Match history (scrollable) -->
-                    <div class="mt-xl pt-xl" style="border-top: 1px solid var(--border-primary);">
-                        <h3 class="text-lg font-semibold mb-lg">🏆 Recent Matches</h3>
-                        <div class="card text-center p-xl text-muted profile-history-scroll">
-                            <div class="text-4xl mb-md">🎮</div>
-                            <p class="mb-md">No matches played yet</p>
-                            <a href="#game-modes" class="text-primary" style="text-decoration: underline;">Start playing</a>
                         </div>
                     </div>
                 </div>
