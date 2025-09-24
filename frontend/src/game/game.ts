@@ -1,7 +1,6 @@
 // src/game.ts
 import { getGameMode } from './gameState';
 import { socket } from '../socket';
-
 // ==================== Types pour organiser les données ====================
 interface Paddle {
   x: number;    // Position horizontale
@@ -65,12 +64,24 @@ function draw() {
     return;
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   ctx.fillStyle = 'white';
-  ctx.fillRect(leftPaddle.x, leftPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
-  ctx.fillRect(rightPaddle.x, rightPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
-  ctx.fillRect(ball.x - BALL_SIZE / 2, ball.y - BALL_SIZE / 2, BALL_SIZE, BALL_SIZE);
-  ctx.font = '30px Arial';
-  ctx.fillText(leftPaddle.score.toString(), SCORE_LEFT_X, 50);
-  ctx.fillText(rightPaddle.score.toString(), SCORE_RIGHT_X, 50);
+  const mode = getGameMode();
+  const isHost = !localStorage.getItem('gameHost') || localStorage.getItem('gameHost') === socket.id;
+  if (mode === '1v1-remote' && !isHost) {
+    // Mirror: draw rightPaddle as left, leftPaddle as right
+    ctx.fillRect(0, rightPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+    ctx.fillRect(RIGHT_PADDLE_STARTING_X_POSITION, leftPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+    ctx.fillRect(CANVAS_WIDTH - ball.x - BALL_SIZE / 2, ball.y - BALL_SIZE / 2, BALL_SIZE, BALL_SIZE);
+    ctx.font = '20px Arial';
+    ctx.fillText(rightPaddle.score.toString(), SCORE_LEFT_X, 50);
+    ctx.fillText(leftPaddle.score.toString(), SCORE_RIGHT_X, 50);
+  } else {
+    ctx.fillRect(leftPaddle.x, leftPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+    ctx.fillRect(rightPaddle.x, rightPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+    ctx.fillRect(ball.x - BALL_SIZE / 2, ball.y - BALL_SIZE / 2, BALL_SIZE, BALL_SIZE);
+    ctx.font = '20px Arial';
+    ctx.fillText(leftPaddle.score.toString(), SCORE_LEFT_X, 50);
+    ctx.fillText(rightPaddle.score.toString(), SCORE_RIGHT_X, 50);
+  }
 
   // Display countdown if active
   if (countdown !== null) {
@@ -108,9 +119,9 @@ export function initGame() {
   const startButton = document.getElementById('startGameButton') as HTMLButtonElement;
   startButton.addEventListener('click', startGame);
   const pauseButton = document.getElementById('pauseGameButton') as HTMLButtonElement;
-  pauseButton.addEventListener('click', pauseGame);
+  pauseButton.style.display = 'none';
   const resetButton = document.getElementById('resetGameButton') as HTMLButtonElement;
-  resetButton.addEventListener('click', resetGame);
+  resetButton.style.display = 'none';
 }
 
 // Gérer les touches du joueur
@@ -144,10 +155,10 @@ function handleInput() {
       if (keys.has('s') && leftPaddle.y < PADDLE_MAX_Y)
         leftPaddle.y += PADDLE_SPEED;
     } else {
-      // Client controls right paddle
-      if (keys.has('ArrowUp') && rightPaddle.y > 0)
+      // Client controls right paddle with W/S
+      if (keys.has('w') && rightPaddle.y > 0)
         rightPaddle.y -= PADDLE_SPEED;
-      if (keys.has('ArrowDown') && rightPaddle.y < PADDLE_MAX_Y)
+      if (keys.has('s') && rightPaddle.y < PADDLE_MAX_Y)
         rightPaddle.y += PADDLE_SPEED;
     }
   }
@@ -179,10 +190,15 @@ function update() {
       animationFrameId = requestAnimationFrame(update);
       return;
     }
+    // If game ended, trigger endGame
+    if (!gameRunning) {
+      endGame();
+      return;
+    }
     // Send input for right paddle
     const input = {
-      up: keys.has('ArrowUp'),
-      down: keys.has('ArrowDown')
+      up: keys.has('w'),
+      down: keys.has('s')
     };
     socket.emit('game_update', { input });
     draw();
@@ -436,16 +452,6 @@ export function cleanupGame() {
     startButton.disabled = false;
     startButton.removeEventListener('click', startGame);
   }
-  const pauseButton = document.getElementById('pauseGameButton') as HTMLButtonElement;
-  if (pauseButton) {
-    pauseButton.disabled = false;
-    pauseButton.removeEventListener('click', pauseGame);
-  }
-  const resetButton = document.getElementById('resetGameButton') as HTMLButtonElement;
-  if (resetButton) {
-    resetButton.disabled = false;
-    resetButton.removeEventListener('click', resetGame);
-  }
 }
 
 // Terminer la partie et afficher le message
@@ -453,14 +459,55 @@ function endGame() {
   gameRunning = false;
   const messageElement = document.getElementById('gameMessageWinOrLose') as HTMLDivElement;
   messageElement.classList.remove('hidden');
-  if (leftPaddle.score >= WINNING_SCORE) {
-    messageElement.textContent = 'YOU WIN !';
-    messageElement.classList.add('text-green-400');
-  } else if (rightPaddle.score >= WINNING_SCORE) {
-    messageElement.textContent = 'Sale merde tu viens de perdre contre un bot nul a chier en plus, tu merite vraiment de nettoyer le cul des vieux dans un EMS';
-    messageElement.classList.add('text-red-400');
+  const mode = getGameMode();
+  const isHost = !localStorage.getItem('gameHost') || localStorage.getItem('gameHost') === socket.id;
+  if (mode === '1v1-remote' && !isHost) {
+    // For client, rightPaddle is theirs
+    if (rightPaddle.score >= WINNING_SCORE) {
+      messageElement.textContent = 'YOU WIN !';
+      messageElement.classList.add('text-green-400');
+    } else if (leftPaddle.score >= WINNING_SCORE) {
+      messageElement.textContent = 'YOU LOSE !';
+      messageElement.classList.add('text-red-400');
+    }
+  } else {
+    if (leftPaddle.score >= WINNING_SCORE) {
+      messageElement.textContent = 'YOU WIN !';
+      messageElement.classList.add('text-green-400');
+    } else if (rightPaddle.score >= WINNING_SCORE) {
+      messageElement.textContent = 'YOU LOSE !';
+      messageElement.classList.add('text-red-400');
+    }
   }
-  (document.getElementById('startGameButton') as HTMLButtonElement).disabled = false; // Réactiver Start Game pour relancer
+  // Send final state for remote
+  if (mode === '1v1-remote' && isHost) {
+    const gameState = {
+      leftPaddle,
+      rightPaddle,
+      ball,
+      gameRunning,
+      gamePaused,
+      countdown
+    };
+    socket.emit('game_update', gameState);
+  }
+  // Replace buttons with Leave button
+  const buttonsDiv = document.querySelector('.flex.justify-center.gap-md') as HTMLDivElement;
+  buttonsDiv.innerHTML = '<button id="leaveGameButton" class="btn btn-primary">Leave</button>';
+  const leaveButton = document.getElementById('leaveGameButton') as HTMLButtonElement;
+  leaveButton.addEventListener('click', () => {
+    // Navigate to livechat
+    window.history.pushState({ page: 'live-chat' }, '', '#live-chat');
+    document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+    const livechatSection = document.getElementById('live-chat');
+    if (livechatSection) livechatSection.classList.remove('hidden');
+    // Update nav
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    const chatNavLink = document.querySelector('[data-page="live-chat"]');
+    if (chatNavLink) chatNavLink.classList.add('active');
+    // Cleanup game
+    cleanupGame();
+  });
 }
 
 // ==================== BOT ====================
