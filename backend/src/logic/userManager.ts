@@ -63,6 +63,20 @@ export async function createUser(
     return { success: false, error: 'Champs requis manquants' };
   }
 
+  // Validation des longueurs
+  if (name.trim().length < 1 || name.trim().length > 50) {
+    return { success: false, error: 'Le pseudo doit contenir entre 1 et 50 caractères' };
+  }
+  if (login.trim().length < 3 || login.trim().length > 30) {
+    return { success: false, error: 'Le login doit contenir entre 3 et 30 caractères' };
+  }
+  if (email.trim().length < 5 || email.trim().length > 100) {
+    return { success: false, error: 'L\'email doit contenir entre 5 et 100 caractères' };
+  }
+  if (password.length < 6) {
+    return { success: false, error: 'Le mot de passe doit contenir au moins 6 caractères' };
+  }
+
   try {
     // Hash du mot de passe (cryptage sécurisé)
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -197,6 +211,20 @@ export async function updateUserProfile(
   updates: { name?: string; email?: string; login?: string; password?: string }
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Validation des longueurs
+    if (updates.name && (updates.name.trim().length < 1 || updates.name.trim().length > 30)) {
+      return { success: false, error: 'Le pseudo doit contenir entre 1 et 50 caractères' };
+    }
+    if (updates.login && (updates.login.trim().length < 3 || updates.login.trim().length > 30)) {
+      return { success: false, error: 'Le login doit contenir entre 3 et 30 caractères' };
+    }
+    if (updates.email && (updates.email.trim().length < 5 || updates.email.trim().length > 60)) {
+      return { success: false, error: 'L\'email doit contenir entre 5 et 100 caractères' };
+    }
+    if (updates.password && updates.password.length < 6) {
+      return { success: false, error: 'Le mot de passe doit contenir au moins 6 caractères' };
+    }
+
     // Vérifier l'unicité du nom (pseudo) si fourni
     if (updates.name) {
       const existingName = await new Promise<any>((resolve, reject) => {
