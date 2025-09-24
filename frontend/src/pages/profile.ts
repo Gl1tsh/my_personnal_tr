@@ -254,17 +254,21 @@ export async function initProfilePage(): Promise<void> {
     const editBtn = $('[data-action="edit"]') as HTMLElement;
     const deleteBtn = $('[data-action="delete"]') as HTMLElement;
     const infoEl = $('[data-field="info"]') as HTMLElement;
+    const logoutBtn = $('[data-action="logout"]') as HTMLElement;
     if (editBtn) editBtn.style.display = 'none';
     if (deleteBtn) deleteBtn.style.display = 'none';
     if (infoEl) infoEl.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'none';
   } else {
     // Ensure they are visible for own profile
     const editBtn = $('[data-action="edit"]') as HTMLElement;
     const deleteBtn = $('[data-action="delete"]') as HTMLElement;
     const infoEl = $('[data-field="info"]') as HTMLElement;
+    const logoutBtn = $('[data-action="logout"]') as HTMLElement;
     if (editBtn) editBtn.style.display = 'block';
     if (deleteBtn) deleteBtn.style.display = 'block';
     if (infoEl) infoEl.style.display = 'block';
+    if (logoutBtn) logoutBtn.style.display = 'block';
   }
   setupEvents();
   console.log('✅ Profile page initialized successfully');
