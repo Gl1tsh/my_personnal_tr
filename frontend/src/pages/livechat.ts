@@ -33,7 +33,7 @@ async function getUserProfile() {
 const history: History = {};
 
 export async function initChatPage() {
-  const btnGen = document.getElementById('btn-general')! as HTMLButtonElement;
+  // Suppression du bouton général : plus de canal général
   const dmList = document.getElementById('dm-list')! as HTMLDivElement;
   const userList = document.getElementById('user-list')! as HTMLDivElement;
   const titleElem = document.getElementById('chat-title')! as HTMLSpanElement;
@@ -43,8 +43,7 @@ export async function initChatPage() {
   const form = document.getElementById('chat_form')! as HTMLFormElement;
   const input = document.getElementById('chat_input')! as HTMLInputElement;
 
-  let current = '';
-  history[current] = [];
+  let current = null as string | null;
 
   // Récupérer le nom d'utilisateur depuis l'API centralisée
   const userProfile = await getUserProfile();
@@ -111,16 +110,17 @@ export async function initChatPage() {
 
   blockBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-
-    if (blockedUsers.has(current)) {
-      blockedUsers.delete(current);
-      console.log(`✅ Débloqué : ${current}`);
-    } else {
-      blockedUsers.add(current);
-      console.log(`🚫 Bloqué : ${current}`);
+    if (typeof current === 'string') {
+      if (blockedUsers.has(current)) {
+        blockedUsers.delete(current);
+        console.log(`✅ Débloqué : ${current}`);
+      } else {
+        blockedUsers.add(current);
+        console.log(`🚫 Bloqué : ${current}`);
+      }
+      saveBlocked();
+      render();
     }
-    saveBlocked();
-    render();
   });
 
   inviteBtn.addEventListener('click', (e) => {
@@ -176,7 +176,7 @@ export async function initChatPage() {
       render();
   });
 
-  btnGen.onclick = () => switchTo('');
+
 
   // ATTENTION : A REVOIR
   const target = localStorage.getItem('dmTarget');
@@ -191,6 +191,7 @@ export async function initChatPage() {
     }
     switchTo(target);
   } else {
+    // Si aucun DM, on ne sélectionne rien
     render();
   }
 
@@ -224,23 +225,22 @@ export async function initChatPage() {
   }
 
   function render() {
-    titleElem.textContent = (current === '') ? '# general' : `@ ${getUsernameById(current)}`;
+    // Affiche le nom du DM ou rien
+    titleElem.textContent = current ? `@ ${getUsernameById(current)}` : '';
 
-    if (current === '') {
+    if (!current) {
       blockBtn.style.display = 'none';
-    } else {
-      blockBtn.style.display = 'inline-block';
-      blockBtn.textContent = blockedUsers.has(current) ? 'Unblock user' : 'Block user';
-    }
-    if (current === '' || blockedUsers.has(current)) {
       inviteBtn.style.display = 'none';
-    } else {
-      inviteBtn.style.display = 'inline-block';
+      chatbox.innerHTML = '<div class="text-gray-400 text-center">Sélectionnez un utilisateur pour démarrer une conversation.</div>';
+      return;
     }
+
+    blockBtn.style.display = 'inline-block';
+    blockBtn.textContent = blockedUsers.has(current) ? 'Unblock user' : 'Block user';
+  inviteBtn.style.display = (typeof current === 'string' && blockedUsers.has(current)) ? 'none' : 'inline-block';
 
     chatbox.innerHTML = '';
     for (const message of (history[current] || [])) {
-      // On récupère l'id d'origine (originalFrom) pour le filtrage
       const originalFrom = (message as any).originalFrom || message.from;
       if (blockedUsers.has(originalFrom))
         continue;
@@ -255,7 +255,7 @@ export async function initChatPage() {
         if (joinMatch) {
           const hostId = joinMatch[1];
           const textBefore = message.text.replace(/\[JOIN_GAME:[^\]]+\]/, '');
-          element.innerHTML = `<strong>${message.from}:</strong> ${textBefore}<button class="join-game-btn bg-green-500 text-white px-2 py-1 rounded ml-2" data-host="${hostId}">Join Game</button>`;
+          element.innerHTML = `<strong>${message.from}:</strong> ${textBefore}<button class=\"join-game-btn bg-green-500 text-white px-2 py-1 rounded ml-2\" data-host=\"${hostId}\">Join Game</button>`;
         } else {
           element.innerHTML = `<strong>${message.from}:</strong> ${message.text}`;
         }
@@ -265,11 +265,10 @@ export async function initChatPage() {
       chatbox.appendChild(element);
     }
     // Add event listeners for join buttons
-    chatbox.querySelectorAll('.join-game-btn').forEach((btn: HTMLElement) => {
+    (chatbox.querySelectorAll('.join-game-btn') as NodeListOf<HTMLButtonElement>).forEach((btn) => {
       btn.addEventListener('click', (e: Event) => {
         const hostId = (e.target as HTMLElement).getAttribute('data-host');
         if (hostId) {
-          // Set game mode to remote and navigate to game
           setGameMode('1v1-remote');
           localStorage.setItem('gameHost', hostId);
           window.location.hash = '#game';
@@ -278,8 +277,7 @@ export async function initChatPage() {
     });
     chatbox.scrollTop = chatbox.scrollHeight;
 
-    btnGen.classList.toggle('bg-blue-500', current === '');
-    btnGen.classList.toggle('bg-gray-700', current !== '')
+    // Plus de bouton général à colorer
     for (const child of dmList.children) {
       child.classList.toggle('bg-gray-700', child.textContent === current);
     }
