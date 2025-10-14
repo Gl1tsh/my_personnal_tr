@@ -194,6 +194,9 @@ export function endGame() {
     leaveButton.addEventListener('click', () => {
       // Reset game state (invisible)
       resetGameState();
+      // Masquer le message Win/Lose si affiché
+      const messageElement = document.getElementById('gameMessageWinOrLose') as HTMLDivElement;
+      if (messageElement) messageElement.classList.add('hidden');
       // Emit leave_game to reset the room (serveur)
       socket.emit('leave_game');
       // Navigate to livechat
