@@ -279,6 +279,18 @@ export async function initChatPage() {
           setGameMode('1v1-remote');
           localStorage.setItem('gameHost', hostId);
           window.location.hash = '#game';
+          // Supprime le message contenant ce bouton du chat (DOM)
+          const messageDiv = (e.target as HTMLElement).closest('div');
+          if (messageDiv && messageDiv.parentNode) {
+            messageDiv.parentNode.removeChild(messageDiv);
+          }
+          // Supprime aussi le message d'invitation de l'historique JS pour éviter qu'il ne réapparaisse
+          if (typeof current === 'string' && history[current]) {
+            history[current] = history[current].filter((msg: { text?: string }) => {
+              // On supprime le message qui contient le même hostId dans le texte
+              return !(msg.text && msg.text.includes(`[JOIN_GAME:${hostId}]`));
+            });
+          }
         }
       });
     });
