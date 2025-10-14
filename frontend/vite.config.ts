@@ -6,7 +6,10 @@ export default defineConfig({
   server: {
     port: 3002,
     open: false,  // Désactivé pour éviter les conflits
-    host: true   // Permet les connexions externes
+    host: true,   // Permet les connexions externes
+    watch: {
+      usePolling: true  // Améliore la surveillance des fichiers sous WSL
+    }
   },
   build: {
     outDir: 'dist',

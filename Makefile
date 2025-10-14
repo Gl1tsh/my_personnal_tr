@@ -109,53 +109,25 @@ dev:
 	@make kill-ports
 	@echo ""
 	@echo "$(BLUE) 📡 Starting services...$(RESET)"
-	@bash -c '\
-		CLEANUP_DONE=false; \
-		cleanup() { \
-			if [ "$$CLEANUP_DONE" = "true" ]; then return; fi; \
-			CLEANUP_DONE=true; \
-			printf "\n"; \
-			printf "\033[33m\033[1m 🧹 Nettoyage en cours...\033[0m\n"; \
-			lsof -ti:3000 | xargs kill -9 2>/dev/null || true; \
-			lsof -ti:3001 | xargs kill -9 2>/dev/null || true; \
-			lsof -ti:3002 | xargs kill -9 2>/dev/null || true; \
-			pkill -f "npm run server" 2>/dev/null || true; \
-			pkill -f "npm run chat" 2>/dev/null || true; \
-			pkill -f "vite" 2>/dev/null || true; \
-			sleep 1; \
-			printf "\033[33m\033[1m ╔══════════════════════════════════════════════════════════════╗\033[0m\n"; \
-			printf "\033[33m\033[1m ║                        👋 ARRÊT PROPRE 👋                    ║\033[0m\n"; \
-			printf "\033[33m\033[1m ╠══════════════════════════════════════════════════════════════╣\033[0m\n"; \
-			printf "\033[33m\033[1m ║                                                              ║\033[0m\n"; \
-			printf "\033[33m\033[1m ║\033[0m  \033[32m\033[1m✅ Tous les ports ont été libérés\033[0m                           \033[33m\033[1m║\033[0m\n"; \
-			printf "\033[33m\033[1m ║\033[0m  \033[32m\033[1m✅ Serveurs arrêtés correctement\033[0m                            \033[33m\033[1m║\033[0m\n"; \
-			printf "\033[33m\033[1m ║                                                              ║\033[0m\n"; \
-			printf "\033[33m\033[1m ║\033[0m  \033[36m\033[1m⚡ Tapez make pour relancer le menu\033[0m                         \033[33m\033[1m║\033[0m\n"; \
-			printf "\033[33m\033[1m ║                                                              ║\033[0m\n"; \
-			printf "\033[33m\033[1m ╚══════════════════════════════════════════════════════════════╝\033[0m\n"; \
-			printf "\n"; \
-		}; \
-		trap cleanup SIGINT SIGTERM; \
-		cd $(BACK_DIR) && nohup npm run server >/dev/null 2>&1 & \
-		cd $(BACK_DIR) && nohup npm run chat >/dev/null 2>&1 & \
-		sleep 3; \
-		printf "\033[32m\033[1m ✅ Backend API démarré sur port 3001\033[0m\n"; \
-		printf "\033[32m\033[1m ✅ Socket.IO démarré sur port 3000\033[0m\n"; \
-		printf "\033[33m\033[1m 🌐 Lancement du frontend...\033[0m\n"; \
-		printf "\n"; \
-		printf "\033[36m\033[1m ╔══════════════════════════════════════════════════════════════╗\033[0m\n"; \
-		printf "\033[36m\033[1m ║                     🎉 PRÊT À DÉVELOPPER ! 🎉                ║\033[0m\n"; \
-		printf "\033[36m\033[1m ╠══════════════════════════════════════════════════════════════╣\033[0m\n"; \
-		printf "\033[36m\033[1m ║                                                              ║\033[0m\n"; \
-		printf "\033[36m\033[1m ║\033[0m  \033[32m\033[1m🔗 Backend API:\033[0m  \033[34m\033[1mhttp://localhost:3001\033[0m                      \033[36m\033[1m║\033[0m\n"; \
-		printf "\033[36m\033[1m ║\033[0m  \033[32m\033[1m📡 Socket.IO:\033[0m    \033[34m\033[1mhttp://localhost:3000\033[0m                      \033[36m\033[1m║\033[0m\n"; \
-		printf "\033[36m\033[1m ║\033[0m  \033[35m\033[1m🌐 Frontend App:\033[0m \033[34m\033[1mhttp://localhost:3002\033[0m                      \033[36m\033[1m║\033[0m\n"; \
-		printf "\033[36m\033[1m ║                                                              ║\033[0m\n"; \
-		printf "\033[36m\033[1m ║\033[0m             \033[37m\033[1mAppuyez sur Ctrl+C pour arrêter\033[0m                  \033[36m\033[1m║\033[0m\n"; \
-		printf "\033[36m\033[1m ╚══════════════════════════════════════════════════════════════╝\033[0m\n"; \
-		printf "\n"; \
-		cd $(FRONT_DIR) && npm run dev || cleanup; \
-	'
+	@cd $(BACK_DIR) && nohup npm run server >/dev/null 2>&1 &
+	@cd $(BACK_DIR) && nohup npm run chat >/dev/null 2>&1 &
+	@sleep 3
+	@printf "\033[32m\033[1m ✅ Backend API démarré sur port 3001\033[0m\n"
+	@printf "\033[32m\033[1m ✅ Socket.IO démarré sur port 3000\033[0m\n"
+	@printf "\033[33m\033[1m 🌐 Lancement du frontend...\033[0m\n"
+	@printf "\n"
+	@printf "\033[36m\033[1m ╔══════════════════════════════════════════════════════════════╗\033[0m\n"
+	@printf "\033[36m\033[1m ║                     🎉 PRÊT À DÉVELOPPER ! 🎉                ║\033[0m\n"
+	@printf "\033[36m\033[1m ╠══════════════════════════════════════════════════════════════╣\033[0m\n"
+	@printf "\033[36m\033[1m ║                                                              ║\033[0m\n"
+	@printf "\033[36m\033[1m ║\033[0m  \033[32m\033[1m🔗 Backend API:\033[0m  \033[34m\033[1mhttp://localhost:3001\033[0m                      \033[36m\033[1m║\033[0m\n"
+	@printf "\033[36m\033[1m ║\033[0m  \033[32m\033[1m📡 Socket.IO:\033[0m    \033[34m\033[1mhttp://localhost:3000\033[0m                      \033[36m\033[1m║\033[0m\n"
+	@printf "\033[36m\033[1m ║\033[0m  \033[35m\033[1m🌐 Frontend App:\033[0m \033[34m\033[1mhttp://localhost:3002\033[0m                      \033[36m\033[1m║\033[0m\n"
+	@printf "\033[36m\033[1m ║                                                              ║\033[0m\n"
+	@printf "\033[36m\033[1m ║\033[0m             \033[37m\033[1mAppuyez sur Ctrl+C pour arrêter\033[0m                  \033[36m\033[1m║\033[0m\n"
+	@printf "\033[36m\033[1m ╚══════════════════════════════════════════════════════════════╝\033[0m\n"
+	@printf "\n"
+	@cd $(FRONT_DIR) && npm run dev
 
 install:
 	@echo ""
