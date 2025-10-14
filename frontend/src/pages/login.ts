@@ -61,7 +61,8 @@ export function initLoginPage() {
       if (result.sessionToken) {
         sessionStorage.setItem('authToken', result.sessionToken);
         console.log('🔐 Token de session sauvegardé');
-        
+        // Mettre à jour la navbar sans refresh
+        if (window.updateNavAuthLinks) window.updateNavAuthLinks();
         // Mettre à jour le pseudo sur le socket maintenant qu'on est connecté
         const { updateUsernameOnServer } = await import('../socket.js');
         updateUsernameOnServer(result.user.name);

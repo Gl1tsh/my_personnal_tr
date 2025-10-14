@@ -185,11 +185,39 @@ window.startPong = () => {
   }
 };
 
+
+
+// Toggle la navbar : affiche Login OU Profile selon l'état de connexion
+function updateNavAuthLinks() {
+  const loginNav = document.querySelector('.nav-link[data-page="login"]') as HTMLElement;
+  const profileNav = document.querySelector('.nav-link[data-page="profile"]') as HTMLElement;
+  if (!loginNav || !profileNav) return;
+  const token = sessionStorage.getItem('authToken');
+  if (token) {
+    loginNav.style.display = 'none';
+    profileNav.style.display = '';
+  } else {
+    loginNav.style.display = '';
+    profileNav.style.display = 'none';
+  }
+}
+
+// Rendre accessible globalement pour les autres modules (login/logout)
+// @ts-ignore
+window.updateNavAuthLinks = updateNavAuthLinks;
+
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
+  document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+    updateNavAuthLinks();
+  });
 } else {
   initApp();
+  updateNavAuthLinks();
 }
+
+// Mettre à jour dynamiquement lors du login/logout
+window.addEventListener('storage', updateNavAuthLinks);
 
 export { };

@@ -134,6 +134,7 @@ const actions = {
   logout: async () => {
     if (confirm('Déconnexion ?')) {
       sessionStorage.removeItem('authToken');
+      if (window.updateNavAuthLinks) window.updateNavAuthLinks();
       window.location.hash = '#login';
     }
   },
