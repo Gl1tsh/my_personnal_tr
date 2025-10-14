@@ -1,7 +1,7 @@
 // backend/src/handlers/userHandlers.ts
 import { FastifyInstance, RouteShorthandOptions } from 'fastify';
 import { getDb } from '../db';
-import { getAllUsers, createUser, CreateUserData, updateUserName, deleteUser, updateUserProfile, updateUserAvatar } from '../logic/userManager';
+import { getAllUsers, createUser, CreateUserData, updateUserName, deleteUser, updateUserProfile, updateUserAvatar, incrementUserWins, incrementUserLosses } from '../logic/userManager';
 import { validateSession, logoutUser } from '../authentication/loginManager';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -353,6 +353,78 @@ export async function registerUserHandlers(fastify: FastifyInstance) {
       console.error('Erreur upload avatar:', error);
       return reply.status(500).send({ error: 'Erreur lors de l\'upload du fichier' });
     }
+  });
+
+  // Route POST /auth/stats/win - Incrémenter les victoires
+  fastify.post('/auth/stats/win', {
+    schema: {
+      headers: {
+        type: 'object',
+        properties: { authorization: { type: 'string' } },
+        required: ['authorization']
+      },
+      response: {
+        200: { type: 'object', properties: { message: { type: 'string' } } },
+        401: { type: 'object', properties: { error: { type: 'string' } } },
+        500: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (request, reply) => {
+    // Vérifier l'authentification
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return reply.status(401).send({ error: 'Token manquant' });
+    }
+    const token = authHeader.split(' ')[1];
+    const session = validateSession(token);
+    if (!session) {
+      return reply.status(401).send({ error: 'Session invalide' });
+    }
+
+    const db = getDb();
+    const result = await incrementUserWins(db, session.userId);
+
+    if (!result.success) {
+      return reply.status(500).send({ error: result.error });
+    }
+
+    reply.status(200).send({ message: 'Victoire enregistrée' });
+  });
+
+  // Route POST /auth/stats/loss - Incrémenter les défaites
+  fastify.post('/auth/stats/loss', {
+    schema: {
+      headers: {
+        type: 'object',
+        properties: { authorization: { type: 'string' } },
+        required: ['authorization']
+      },
+      response: {
+        200: { type: 'object', properties: { message: { type: 'string' } } },
+        401: { type: 'object', properties: { error: { type: 'string' } } },
+        500: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (request, reply) => {
+    // Vérifier l'authentification
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return reply.status(401).send({ error: 'Token manquant' });
+    }
+    const token = authHeader.split(' ')[1];
+    const session = validateSession(token);
+    if (!session) {
+      return reply.status(401).send({ error: 'Session invalide' });
+    }
+
+    const db = getDb();
+    const result = await incrementUserLosses(db, session.userId);
+
+    if (!result.success) {
+      return reply.status(500).send({ error: result.error });
+    }
+
+    reply.status(200).send({ message: 'Défaite enregistrée' });
   });
 
   // Route GET /uploads/avatars/:filename - Servir les avatars

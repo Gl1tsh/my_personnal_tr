@@ -4,6 +4,8 @@ interface User {
   login: string;
   email: string;
   avatar?: string | null;
+  wins?: number;
+  losses?: number;
 }
 
 // === UTILITAIRES ===
@@ -105,6 +107,52 @@ async function uploadAvatar(file: File): Promise<{ success: boolean; error?: str
   }
 }
 
+async function incrementWins(): Promise<{ success: boolean; error?: string }> {
+  const token = sessionStorage.getItem('authToken');
+  if (!token) return { success: false, error: 'Token manquant' };
+
+  try {
+    const response = await fetch('http://localhost:3001/auth/stats/win', {
+      method: 'POST',
+      headers: { 
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      return { success: true };
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      return { success: false, error: errorData.error || 'Erreur' };
+    }
+  } catch {
+    return { success: false, error: 'Erreur réseau' };
+  }
+}
+
+async function incrementLosses(): Promise<{ success: boolean; error?: string }> {
+  const token = sessionStorage.getItem('authToken');
+  if (!token) return { success: false, error: 'Token manquant' };
+
+  try {
+    const response = await fetch('http://localhost:3001/auth/stats/loss', {
+      method: 'POST',
+      headers: { 
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      return { success: true };
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      return { success: false, error: errorData.error || 'Erreur' };
+    }
+  } catch {
+    return { success: false, error: 'Erreur réseau' };
+  }
+}
+
 async function deleteUser(): Promise<boolean> {
   const token = sessionStorage.getItem('authToken');
   if (!token) return false;
@@ -143,7 +191,9 @@ function populateFields(user: User): void {
     info: `${user.login}  ${user.email}`,
     'edit-name': user.name,
     'edit-email': user.email,
-    'edit-login': user.login
+    'edit-login': user.login,
+    wins: user.wins?.toString() || '0',
+    losses: user.losses?.toString() || '0'
   };
   
   Object.entries(fields).forEach(([field, value]) => {
@@ -218,6 +268,35 @@ const actions = {
       }
     };
     input.click();
+  },
+  // Fonctions de test pour les statistiques (à supprimer plus tard)
+  testWin: async () => {
+    const result = await incrementWins();
+    if (result.success) {
+      // Mettre à jour l'affichage localement
+      const winsEl = $('[data-field="wins"]');
+      if (winsEl && currentUser) {
+        currentUser.wins = (currentUser.wins || 0) + 1;
+        winsEl.textContent = currentUser.wins.toString();
+      }
+      alert('Victoire enregistrée !');
+    } else {
+      alert(result.error || 'Erreur');
+    }
+  },
+  testLoss: async () => {
+    const result = await incrementLosses();
+    if (result.success) {
+      // Mettre à jour l'affichage localement
+      const lossesEl = $('[data-field="losses"]');
+      if (lossesEl && currentUser) {
+        currentUser.losses = (currentUser.losses || 0) + 1;
+        lossesEl.textContent = currentUser.losses.toString();
+      }
+      alert('Défaite enregistrée !');
+    } else {
+      alert(result.error || 'Erreur');
+    }
   }
 };
 

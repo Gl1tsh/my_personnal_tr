@@ -15,6 +15,8 @@ export interface User {
   login: string;
   email: string;
   avatar?: string;
+  wins?: number;
+  losses?: number;
 }
 
 // Stockage simple des sessions (en production, utilisez Redis)
@@ -44,7 +46,7 @@ export async function authenticateUser(
     const getUserByIdentifier = (identifier: string): Promise<any> => {
       return new Promise((resolve, reject) => {
         db.get(
-          'SELECT id, name, login, email, password FROM users WHERE login = ? OR email = ?',
+          'SELECT id, name, login, email, password, avatar, wins, losses FROM users WHERE login = ? OR email = ?',
           [identifier, identifier],
           (err, row) => {
             if (err) reject(err);
@@ -76,7 +78,10 @@ export async function authenticateUser(
       id: row.id,
       name: row.name,
       login: row.login,
-      email: row.email
+      email: row.email,
+      avatar: row.avatar || null,
+      wins: row.wins || 0,
+      losses: row.losses || 0
     };
 
     const sessionToken = generateSessionToken();
@@ -108,7 +113,7 @@ export async function getUserProfile(
     const getUserById = (userId: number): Promise<any> => {
       return new Promise((resolve, reject) => {
         db.get(
-          'SELECT id, name, login, email, avatar FROM users WHERE id = ?',
+          'SELECT id, name, login, email, avatar, wins, losses FROM users WHERE id = ?',
           [userId],
           (err, row) => {
             if (err) reject(err);
@@ -129,7 +134,9 @@ export async function getUserProfile(
       name: row.name,
       login: row.login,
       email: row.email,
-      avatar: row.avatar || null
+      avatar: row.avatar || null,
+      wins: row.wins || 0,
+      losses: row.losses || 0
     };
 
     console.log('✅ Profil récupéré pour:', row.login);

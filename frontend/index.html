@@ -164,13 +164,18 @@
                         <h3 class="text-lg font-semibold mb-lg">📊 Statistics</h3>
                         <div class="grid grid-2 gap-md">
                             <div class="card p-lg text-center">
-                                <div class="text-2xl font-bold mb-sm">0</div>
+                                <div data-field="wins" class="text-2xl font-bold mb-sm">0</div>
                                 <div class="text-muted text-xs">Wins</div>
                             </div>
                             <div class="card p-lg text-center">
-                                <div class="text-2xl font-bold mb-sm">0</div>
+                                <div data-field="losses" class="text-2xl font-bold mb-sm">0</div>
                                 <div class="text-muted text-xs">Losses</div>
                             </div>
+                        </div>
+                        <!-- Boutons de test (à supprimer plus tard) -->
+                        <div class="flex gap-md mt-lg" style="justify-content: center;">
+                            <button data-action="testWin" class="btn btn-success btn-sm">+1 Win (Test)</button>
+                            <button data-action="testLoss" class="btn btn-danger btn-sm">+1 Loss (Test)</button>
                         </div>
                     </div>
 

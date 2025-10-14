@@ -18,7 +18,9 @@ export function initDb(): void {
         login VARCHAR(255) NOT NULL UNIQUE,
         email VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(128) NOT NULL,
-        avatar VARCHAR(255)
+        avatar VARCHAR(255),
+        wins INTEGER DEFAULT 0,
+        losses INTEGER DEFAULT 0
       )
     `, (err) => {
       if (err) {

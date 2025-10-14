@@ -18,6 +18,8 @@ export interface UserData {
   name: string;
   login: string;
   avatar?: string;
+  wins?: number;
+  losses?: number;
 }
 
 // Récupérer tous les utilisateurs de la base de données
@@ -26,7 +28,7 @@ export async function getAllUsers(db: Database): Promise<{ success: boolean; use
     // Promisifier db.all
     const getAllUsersQuery = (): Promise<any[]> => {
       return new Promise((resolve, reject) => {
-        db.all('SELECT id, name, login, avatar FROM users', (err, rows) => {
+        db.all('SELECT id, name, login, avatar, wins, losses FROM users', (err, rows) => {
           if (err) reject(err);
           else resolve(rows as any[]);
         });
@@ -38,7 +40,9 @@ export async function getAllUsers(db: Database): Promise<{ success: boolean; use
       id: row.id,
       name: row.name,
       login: row.login,
-      avatar: row.avatar || null
+      avatar: row.avatar || null,
+      wins: row.wins || 0,
+      losses: row.losses || 0
     }));
     
     return { success: true, users: formattedUsers };
@@ -208,7 +212,7 @@ export async function deleteUser(
     // 3. Supprimer le fichier avatar s'il existe
     if (avatarPath) {
       try {
-        const fullAvatarPath = path.join(__dirname, '../../', avatarPath);
+        const fullAvatarPath = path.join(process.cwd(), avatarPath);
         if (fs.existsSync(fullAvatarPath)) {
           fs.unlinkSync(fullAvatarPath);
           console.log('🗑️ Avatar supprimé lors de la suppression utilisateur:', fullAvatarPath);
@@ -359,7 +363,7 @@ export async function updateUserAvatar(
     if (oldAvatarPath) {
       try {
         // Convertir le chemin relatif en chemin absolu
-        const fullOldPath = path.join(__dirname, '../../', oldAvatarPath);
+        const fullOldPath = path.join(process.cwd(), oldAvatarPath);
         if (fs.existsSync(fullOldPath)) {
           fs.unlinkSync(fullOldPath);
           console.log('🗑️ Ancien avatar supprimé:', fullOldPath);
@@ -393,6 +397,82 @@ export async function updateUserAvatar(
     return { success: true };
   } catch (err: any) {
     console.error('❌ Erreur lors de la mise à jour de l\'avatar:', err.message);
+    if (err.message === 'Utilisateur non trouvé') {
+      return { success: false, error: 'Utilisateur non trouvé' };
+    } else {
+      return { success: false, error: err.message };
+    }
+  }
+}
+
+// Incrémenter les victoires d'un utilisateur
+export async function incrementUserWins(
+  db: Database,
+  userId: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log('🏆 Incrémentation victoires utilisateur ID:', userId);
+
+    const incrementWins = (): Promise<void> => {
+      return new Promise<void>((resolve, reject) => {
+        const stmt = db.prepare("UPDATE users SET wins = wins + 1 WHERE id = ?");
+        stmt.run(userId, function (err) {
+          if (err) {
+            reject(err);
+          } else if (this.changes === 0) {
+            reject(new Error('Utilisateur non trouvé'));
+          } else {
+            resolve();
+          }
+        });
+        stmt.finalize();
+      });
+    };
+
+    await incrementWins();
+    console.log('✅ Victoires incrémentées pour l\'utilisateur ID:', userId);
+    
+    return { success: true };
+  } catch (err: any) {
+    console.error('❌ Erreur lors de l\'incrémentation des victoires:', err.message);
+    if (err.message === 'Utilisateur non trouvé') {
+      return { success: false, error: 'Utilisateur non trouvé' };
+    } else {
+      return { success: false, error: err.message };
+    }
+  }
+}
+
+// Incrémenter les défaites d'un utilisateur
+export async function incrementUserLosses(
+  db: Database,
+  userId: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log('💔 Incrémentation défaites utilisateur ID:', userId);
+
+    const incrementLosses = (): Promise<void> => {
+      return new Promise<void>((resolve, reject) => {
+        const stmt = db.prepare("UPDATE users SET losses = losses + 1 WHERE id = ?");
+        stmt.run(userId, function (err) {
+          if (err) {
+            reject(err);
+          } else if (this.changes === 0) {
+            reject(new Error('Utilisateur non trouvé'));
+          } else {
+            resolve();
+          }
+        });
+        stmt.finalize();
+      });
+    };
+
+    await incrementLosses();
+    console.log('✅ Défaites incrémentées pour l\'utilisateur ID:', userId);
+    
+    return { success: true };
+  } catch (err: any) {
+    console.error('❌ Erreur lors de l\'incrémentation des défaites:', err.message);
     if (err.message === 'Utilisateur non trouvé') {
       return { success: false, error: 'Utilisateur non trouvé' };
     } else {
