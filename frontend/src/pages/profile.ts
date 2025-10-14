@@ -77,6 +77,34 @@ async function updateUser(data: Partial<User>): Promise<{ success: boolean; erro
   }
 }
 
+async function uploadAvatar(file: File): Promise<{ success: boolean; error?: string; avatarUrl?: string }> {
+  const token = sessionStorage.getItem('authToken');
+  if (!token) return { success: false, error: 'Token manquant' };
+
+  try {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const response = await fetch('http://localhost:3001/auth/profile/avatar', {
+      method: 'POST',
+      headers: { 
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      return { success: true, avatarUrl: result.avatarUrl };
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      return { success: false, error: errorData.error || 'Erreur upload' };
+    }
+  } catch {
+    return { success: false, error: 'Erreur réseau' };
+  }
+}
+
 async function deleteUser(): Promise<boolean> {
   const token = sessionStorage.getItem('authToken');
   if (!token) return false;
@@ -105,7 +133,9 @@ function showState(state: 'loading' | 'denied' | 'main' | 'edit'): void {
 }
 
 function populateFields(user: User): void {
-  const avatar = user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.name}`;
+  const avatar = user.avatar 
+    ? `http://localhost:3001${user.avatar}` 
+    : `https://api.dicebear.com/7.x/bottts/svg?seed=${user.name}`;
   
   const fields = {
     avatar: avatar,
@@ -134,7 +164,7 @@ const actions = {
   logout: async () => {
     if (confirm('Déconnexion ?')) {
       sessionStorage.removeItem('authToken');
-      if (window.updateNavAuthLinks) window.updateNavAuthLinks();
+      if ((window as any).updateNavAuthLinks) (window as any).updateNavAuthLinks();
       window.location.hash = '#login';
     }
   },
@@ -152,6 +182,42 @@ const actions = {
     } else {
       alert('Erreur suppression');
     }
+  },
+  uploadAvatar: async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      // Validation côté client
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Fichier trop volumineux. Taille maximale: 5MB.');
+        return;
+      }
+
+      if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+        alert('Type de fichier non supporté. Utilisez JPEG, PNG, GIF ou WebP.');
+        return;
+      }
+
+      const result = await uploadAvatar(file);
+      if (result.success) {
+        // Mettre à jour l'avatar affiché
+        const avatarImg = $('[data-field="avatar"]') as HTMLImageElement;
+        if (avatarImg && result.avatarUrl) {
+          avatarImg.src = `http://localhost:3001${result.avatarUrl}`;
+        }
+        // Notifier les autres utilisateurs via WebSocket si nécessaire
+        if ((window as any).socket) {
+          (window as any).socket.emit('avatarUpdated', { userId: currentUser?.id, avatarUrl: result.avatarUrl });
+        }
+      } else {
+        alert(result.error || 'Erreur lors de l\'upload');
+      }
+    };
+    input.click();
   }
 };
 
@@ -205,6 +271,19 @@ function setupEvents(): void {
       }
     }
   });
+
+  // Écouter les mises à jour d'avatar en temps réel
+  if ((window as any).socket) {
+    (window as any).socket.on('avatarUpdated', (data: { userId: number; avatarUrl: string }) => {
+      // Si c'est notre propre avatar qui a été mis à jour ailleurs, rafraîchir
+      if (currentUser && data.userId === currentUser.id) {
+        const avatarImg = $('[data-field="avatar"]') as HTMLImageElement;
+        if (avatarImg) {
+          avatarImg.src = `http://localhost:3001${data.avatarUrl}`;
+        }
+      }
+    });
+  }
 }
 
 // === INITIALISATION ===

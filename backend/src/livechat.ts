@@ -109,6 +109,15 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Handle avatar updates
+  socket.on("avatarUpdated", (data: { userId: number; avatarUrl: string }) => {
+    console.log("🖼️ Avatar updated:", data);
+    // Broadcast to all connected clients
+    for (const clientSocket of clients.values()) {
+      clientSocket.emit("avatarUpdated", data);
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log("🔌 Client déconnecté:", socket.id);
     clients.delete(socket.id);

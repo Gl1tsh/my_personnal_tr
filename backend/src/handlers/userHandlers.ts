@@ -1,8 +1,11 @@
 // backend/src/handlers/userHandlers.ts
 import { FastifyInstance, RouteShorthandOptions } from 'fastify';
 import { getDb } from '../db';
-import { getAllUsers, createUser, CreateUserData, updateUserName, deleteUser, updateUserProfile } from '../logic/userManager';
+import { getAllUsers, createUser, CreateUserData, updateUserName, deleteUser, updateUserProfile, updateUserAvatar } from '../logic/userManager';
 import { validateSession, logoutUser } from '../authentication/loginManager';
+import * as fs from 'fs';
+import * as path from 'path';
+import { pipeline } from 'stream/promises';
 
 // Schémas de validation pour les requêtes
 const getUsersSchema: RouteShorthandOptions = {
@@ -268,5 +271,115 @@ export async function registerUserHandlers(fastify: FastifyInstance) {
       return reply.status(400).send({ error: result.error });
     }
     reply.status(200).send({ message: 'Profil mis à jour avec succès' });
+  });
+
+  // Route POST /auth/profile/avatar - Upload d'avatar
+  fastify.post('/auth/profile/avatar', {
+    schema: {
+      headers: {
+        type: 'object',
+        properties: { authorization: { type: 'string' } },
+        required: ['authorization']
+      },
+      response: {
+        200: { type: 'object', properties: { message: { type: 'string' }, avatarUrl: { type: 'string' } } },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        401: { type: 'object', properties: { error: { type: 'string' } } },
+        413: { type: 'object', properties: { error: { type: 'string' } } },
+        415: { type: 'object', properties: { error: { type: 'string' } } },
+        500: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (request, reply) => {
+    // Vérifier l'authentification
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return reply.status(401).send({ error: 'Token manquant' });
+    }
+    const token = authHeader.split(' ')[1];
+    const session = validateSession(token);
+    if (!session) {
+      return reply.status(401).send({ error: 'Session invalide' });
+    }
+
+    const data = await request.file();
+    if (!data) {
+      return reply.status(400).send({ error: 'Aucun fichier fourni' });
+    }
+
+    // Validation du type de fichier
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(data.mimetype)) {
+      return reply.status(415).send({ error: 'Type de fichier non supporté. Utilisez JPEG, PNG, GIF ou WebP.' });
+    }
+
+    // Validation de la taille (5MB max)
+    if (data.file.truncated) {
+      return reply.status(413).send({ error: 'Fichier trop volumineux. Taille maximale: 5MB.' });
+    }
+
+    // Générer un nom de fichier unique
+    const fileExtension = path.extname(data.filename) || '.jpg';
+    const fileName = `${session.userId}_${Date.now()}${fileExtension}`;
+    const filePath = path.join(__dirname, '../../uploads/avatars', fileName);
+
+    try {
+      // Créer le dossier s'il n'existe pas
+      const uploadDir = path.dirname(filePath);
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      // Sauvegarder le fichier
+      await pipeline(data.file, fs.createWriteStream(filePath));
+
+      // Mettre à jour la base de données
+      const db = getDb();
+      const avatarPath = `/uploads/avatars/${fileName}`;
+      const result = await updateUserAvatar(db, session.userId, avatarPath);
+
+      if (!result.success) {
+        // Supprimer le fichier si la DB échoue
+        fs.unlinkSync(filePath);
+        return reply.status(500).send({ error: result.error });
+      }
+
+      reply.status(200).send({ 
+        message: 'Avatar mis à jour avec succès',
+        avatarUrl: avatarPath
+      });
+
+    } catch (error) {
+      console.error('Erreur upload avatar:', error);
+      return reply.status(500).send({ error: 'Erreur lors de l\'upload du fichier' });
+    }
+  });
+
+  // Route GET /uploads/avatars/:filename - Servir les avatars
+  fastify.get('/uploads/avatars/:filename', async (request, reply) => {
+    const { filename } = request.params as { filename: string };
+    const filePath = path.join(__dirname, '../../uploads/avatars', filename);
+
+    try {
+      // Vérifier si le fichier existe
+      if (!fs.existsSync(filePath)) {
+        return reply.status(404).send({ error: 'Avatar non trouvé' });
+      }
+
+      // Déterminer le type MIME
+      const ext = path.extname(filename).toLowerCase();
+      let contentType = 'application/octet-stream';
+      if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+      else if (ext === '.png') contentType = 'image/png';
+      else if (ext === '.gif') contentType = 'image/gif';
+      else if (ext === '.webp') contentType = 'image/webp';
+
+      // Servir le fichier
+      const stream = fs.createReadStream(filePath);
+      return reply.type(contentType).send(stream);
+    } catch (error) {
+      console.error('Erreur lors de la récupération de l\'avatar:', error);
+      return reply.status(500).send({ error: 'Erreur serveur' });
+    }
   });
 }

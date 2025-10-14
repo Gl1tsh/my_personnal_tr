@@ -18,7 +18,7 @@ export function initDb(): void {
         login VARCHAR(255) NOT NULL UNIQUE,
         email VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(128) NOT NULL,
-        avatar BLOB
+        avatar VARCHAR(255)
       )
     `, (err) => {
       if (err) {

@@ -129,7 +129,7 @@ export async function getUserProfile(
       name: row.name,
       login: row.login,
       email: row.email,
-      avatar: row.avatar ? Buffer.from(row.avatar).toString('base64') : null
+      avatar: row.avatar || null
     };
 
     console.log('✅ Profil récupéré pour:', row.login);

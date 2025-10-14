@@ -1,6 +1,8 @@
 // backend/src/logic/userManager.ts
 import * as bcrypt from 'bcrypt';
 import { Database } from 'sqlite3';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Type pour les données d'un nouvel utilisateur
 export interface CreateUserData {
@@ -36,7 +38,7 @@ export async function getAllUsers(db: Database): Promise<{ success: boolean; use
       id: row.id,
       name: row.name,
       login: row.login,
-      avatar: row.avatar ? Buffer.from(row.avatar).toString('base64') : null
+      avatar: row.avatar || null
     }));
     
     return { success: true, users: formattedUsers };
@@ -172,7 +174,19 @@ export async function deleteUser(
   console.log('🗑️ Suppression utilisateur ID:', userId);
 
   try {
-    // Version promisifiée de la suppression
+    // 1. Récupérer l'avatar avant suppression
+    const getUserAvatar = (): Promise<string | null> => {
+      return new Promise((resolve, reject) => {
+        db.get('SELECT avatar FROM users WHERE id = ?', [userId], (err, row: any) => {
+          if (err) reject(err);
+          else resolve(row?.avatar || null);
+        });
+      });
+    };
+
+    const avatarPath = await getUserAvatar();
+
+    // 2. Supprimer l'utilisateur de la base de données
     const removeUser = (): Promise<void> => {
       return new Promise<void>((resolve, reject) => {
         const stmt = db.prepare("DELETE FROM users WHERE id = ?");
@@ -190,6 +204,21 @@ export async function deleteUser(
     };
 
     await removeUser();
+
+    // 3. Supprimer le fichier avatar s'il existe
+    if (avatarPath) {
+      try {
+        const fullAvatarPath = path.join(__dirname, '../../', avatarPath);
+        if (fs.existsSync(fullAvatarPath)) {
+          fs.unlinkSync(fullAvatarPath);
+          console.log('🗑️ Avatar supprimé lors de la suppression utilisateur:', fullAvatarPath);
+        }
+      } catch (fileError) {
+        console.warn('⚠️ Erreur lors de la suppression de l\'avatar:', fileError);
+        // Ne pas échouer pour autant
+      }
+    }
+
     console.log('✅ Utilisateur supprimé avec succès ID:', userId);
     
     return { success: true };
@@ -302,5 +331,72 @@ export async function updateUserProfile(
       return { success: false, error: 'Login ou email déjà utilisé' };
     }
     return { success: false, error: err.message };
+  }
+}
+
+// Mettre à jour l'avatar d'un utilisateur
+export async function updateUserAvatar(
+  db: Database,
+  userId: number,
+  avatarPath: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log('🖼️ Mise à jour avatar utilisateur ID:', userId, 'vers:', avatarPath);
+
+    // 1. Récupérer l'ancien avatar
+    const getOldAvatar = (): Promise<string | null> => {
+      return new Promise((resolve, reject) => {
+        db.get('SELECT avatar FROM users WHERE id = ?', [userId], (err, row: any) => {
+          if (err) reject(err);
+          else resolve(row?.avatar || null);
+        });
+      });
+    };
+
+    const oldAvatarPath = await getOldAvatar();
+
+    // 2. Supprimer l'ancien fichier s'il existe
+    if (oldAvatarPath) {
+      try {
+        // Convertir le chemin relatif en chemin absolu
+        const fullOldPath = path.join(__dirname, '../../', oldAvatarPath);
+        if (fs.existsSync(fullOldPath)) {
+          fs.unlinkSync(fullOldPath);
+          console.log('🗑️ Ancien avatar supprimé:', fullOldPath);
+        }
+      } catch (fileError) {
+        console.warn('⚠️ Erreur lors de la suppression de l\'ancien avatar:', fileError);
+        // Ne pas échouer pour autant, continuer avec la mise à jour
+      }
+    }
+
+    // 3. Mettre à jour la base de données avec le nouveau chemin
+    const updateAvatar = (): Promise<void> => {
+      return new Promise<void>((resolve, reject) => {
+        const stmt = db.prepare("UPDATE users SET avatar = ? WHERE id = ?");
+        stmt.run(avatarPath, userId, function (err) {
+          if (err) {
+            reject(err);
+          } else if (this.changes === 0) {
+            reject(new Error('Utilisateur non trouvé'));
+          } else {
+            resolve();
+          }
+        });
+        stmt.finalize();
+      });
+    };
+
+    await updateAvatar();
+    console.log('✅ Avatar mis à jour pour l\'utilisateur ID:', userId);
+    
+    return { success: true };
+  } catch (err: any) {
+    console.error('❌ Erreur lors de la mise à jour de l\'avatar:', err.message);
+    if (err.message === 'Utilisateur non trouvé') {
+      return { success: false, error: 'Utilisateur non trouvé' };
+    } else {
+      return { success: false, error: err.message };
+    }
   }
 }

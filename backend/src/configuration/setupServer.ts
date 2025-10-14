@@ -1,10 +1,18 @@
 // backend/src/configuration/setupServer.ts
 import { FastifyInstance } from 'fastify';
 import fastifyCors from '@fastify/cors';
+import fastifyMultipart from '@fastify/multipart';
 
 // Configuration CORS et autres paramètres du serveur
 export async function configureServer(fastify: FastifyInstance): Promise<void> {
   
+  // Configuration multipart pour les uploads de fichiers
+  await fastify.register(fastifyMultipart, {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB max
+    }
+  });
+
   // Configuration CORS pour permettre les requêtes depuis le frontend
   await fastify.register(fastifyCors, {
     origin: true, // Autorise toutes les origines (pour le développement)
@@ -13,7 +21,7 @@ export async function configureServer(fastify: FastifyInstance): Promise<void> {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'] // Méthodes HTTP autorisées
   });
 
-  console.log('✅ Configuration CORS appliquée');
+  console.log('✅ Configuration multipart et CORS appliquée');
 }
 
 // Configuration des hooks pour fermer proprement les ressources
