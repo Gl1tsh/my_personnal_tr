@@ -49,11 +49,11 @@ menu:
 	@echo "$(CYAN)$(BOLD) ║                    🚀 TRANSCENDANCE                        ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╠════════════════════════════════════════════════════════════╣$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                            ║$(RESET)"
-	@echo "$(CYAN) ║$(WHITE)  $(BOLD)1.$(RESET) $(GREEN)Lancer l'application$(RESET)                                   $(CYAN)║$(RESET)"
-	@echo "$(CYAN) ║$(WHITE)  $(BOLD)2.$(RESET) $(YELLOW)Installer les dépendances$(RESET)                              $(CYAN)║$(RESET)"
-	@echo "$(CYAN) ║$(WHITE)  $(BOLD)3.$(RESET) $(RED)Nettoyer le projet$(RESET)                                     $(CYAN)║$(RESET)"
-	@echo "$(CYAN) ║$(WHITE)  $(BOLD)4.$(RESET) $(RED)Vider la base de données$(RESET)                               $(CYAN)$(BOLD)║$(RESET)"
-	@echo "$(CYAN) ║$(WHITE)  $(BOLD)5.$(RESET) $(MAGENTA)Goodnight (Nettoyage approfondi)$(RESET)                       $(CYAN)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(BOLD)1.$(RESET) $(GREEN)Lancer la compilation et le serveur avec watcher$(RESET)       $(CYAN)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(BOLD)2.$(RESET) $(YELLOW)Installer les dépendances (node, dist, etc.)$(RESET)           $(CYAN)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(BOLD)4.$(RESET) $(RED)Mettre à blanc les éléments dans la database$(RESET)           $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(BOLD)5.$(RESET) $(MAGENTA)Supprimer dépendances, libérer ports, vider cache$(RESET)      $(CYAN)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(BOLD)6.$(RESET) $(BLUE)Nettoyer les ports$(RESET)                                     $(CYAN)║$(RESET)"
 	@echo "$(CYAN) ║$(WHITE)  $(BOLD)0.$(RESET) $(DIM)Quitter$(RESET)                                                $(CYAN)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                            ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╠════════════════════════════════════════════════════════════╣$(RESET)"
@@ -67,11 +67,11 @@ menu:
 		case $$choice in \
 			1) echo ""; make dev; break ;; \
 			2) echo ""; make install; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
-			3) echo ""; make clean; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
 			4) echo ""; make reset-db; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
 			5) echo ""; make goodnight; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
+			6) echo ""; make kill-ports; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
 			0) echo "$(GREEN)$(BOLD)Au revoir ! 👋$(RESET)"; break ;; \
-			*) echo "$(RED)❌ Choix invalide ! Veuillez choisir entre 0-5.$(RESET)"; echo "" ;; \
+			*) echo "$(RED)❌ Choix invalide ! Veuillez choisir 1, 2, 4, 5, 6 ou 0.$(RESET)"; echo "" ;; \
 		esac \
 	done
 
@@ -102,32 +102,14 @@ WHITE = \033[37m
 #                            🚀 COMMANDES PRINCIPALES
 # ═══════════════════════════════════════════════════════════════════════════════
 
-dev: 
+dev:
 	@echo ""
 	@echo "$(BLUE)$(BOLD) 🚀 Starting development server...$(RESET)"
 	@echo ""
 	@make kill-ports
 	@echo ""
-	@echo "$(BLUE) 📡 Starting services...$(RESET)"
-	@cd $(BACK_DIR) && nohup npm run server >/dev/null 2>&1 &
-	@cd $(BACK_DIR) && nohup npm run chat >/dev/null 2>&1 &
-	@sleep 3
-	@printf "\033[32m\033[1m ✅ Backend API démarré sur port 3001\033[0m\n"
-	@printf "\033[32m\033[1m ✅ Socket.IO démarré sur port 3000\033[0m\n"
-	@printf "\033[33m\033[1m 🌐 Lancement du frontend...\033[0m\n"
-	@printf "\n"
-	@printf "\033[36m\033[1m ╔══════════════════════════════════════════════════════════════╗\033[0m\n"
-	@printf "\033[36m\033[1m ║                     🎉 PRÊT À DÉVELOPPER ! 🎉                ║\033[0m\n"
-	@printf "\033[36m\033[1m ╠══════════════════════════════════════════════════════════════╣\033[0m\n"
-	@printf "\033[36m\033[1m ║                                                              ║\033[0m\n"
-	@printf "\033[36m\033[1m ║\033[0m  \033[32m\033[1m🔗 Backend API:\033[0m  \033[34m\033[1mhttp://localhost:3001\033[0m                      \033[36m\033[1m║\033[0m\n"
-	@printf "\033[36m\033[1m ║\033[0m  \033[32m\033[1m📡 Socket.IO:\033[0m    \033[34m\033[1mhttp://localhost:3000\033[0m                      \033[36m\033[1m║\033[0m\n"
-	@printf "\033[36m\033[1m ║\033[0m  \033[35m\033[1m🌐 Frontend App:\033[0m \033[34m\033[1mhttp://localhost:3002\033[0m                      \033[36m\033[1m║\033[0m\n"
-	@printf "\033[36m\033[1m ║                                                              ║\033[0m\n"
-	@printf "\033[36m\033[1m ║\033[0m             \033[37m\033[1mAppuyez sur Ctrl+C pour arrêter\033[0m                  \033[36m\033[1m║\033[0m\n"
-	@printf "\033[36m\033[1m ╚══════════════════════════════════════════════════════════════╝\033[0m\n"
-	@printf "\n"
-	@cd $(FRONT_DIR) && npm run dev
+	@chmod +x dev.sh 2>/dev/null || true
+	@./dev.sh
 
 install:
 	@echo ""
@@ -189,7 +171,9 @@ endif
 # ═══════════════════════════════════════════════════════════════════════════════
 
 kill-ports:
-	@echo "$(DIM) 🔫 Libération des ports...$(RESET)"
+	@echo ""
+	@echo "$(BLUE)$(BOLD) 🔫 NETTOYAGE DES PORTS EN COURS...$(RESET)"
+	@echo ""
 ifeq ($(OS),Windows_NT)
 	@$(KILL_PORTS)
 else
@@ -198,7 +182,16 @@ else
 	@$(KILL_3002)
 endif
 	@$(WAIT)
-	@echo "$(DIM) ✓ Ports libérés$(RESET)"
+	@echo ""
+	@echo "$(GREEN)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
+	@echo "$(GREEN)$(BOLD) ║                    ✅ PORTS NETTOYÉS ! ✅                    ║$(RESET)"
+	@echo "$(GREEN)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
+	@echo "$(GREEN)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(GREEN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)🔫 Ports 3000, 3001, 3002 libérés$(RESET)                           $(GREEN)$(BOLD)║$(RESET)"
+	@echo "$(GREEN)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)⚡ Prêt pour un nouveau lancement$(RESET)                           $(GREEN)$(BOLD)║$(RESET)"
+	@echo "$(GREEN)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(GREEN)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
+	@echo ""
 
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -238,21 +231,6 @@ goodnight:
 	@echo ""
 	@echo "$(MAGENTA)$(BOLD) 🌙 Bonne nuit ! Nettoyage approfondi en cours...$(RESET)"
 	@echo ""
-ifeq ($(OS),Windows_NT)
-	@powershell -ExecutionPolicy Bypass -File "scripts\\ultimate-clean.ps1" -Force -Quiet
-	@echo ""
-	@echo "$(MAGENTA)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
-	@echo "$(MAGENTA)$(BOLD) ║                      🌙 BONNE NUIT ! 🌙                      ║$(RESET)"
-	@echo "$(MAGENTA)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
-	@echo "$(MAGENTA)$(BOLD) ║                                                              ║$(RESET)"
-	@echo "$(MAGENTA)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Nettoyage approfondi terminé$(RESET)                           $(MAGENTA)$(BOLD)║$(RESET)"
-	@echo "$(MAGENTA)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Ordinateur optimisé$(RESET)                                   $(MAGENTA)$(BOLD)║$(RESET)"
-	@echo "$(MAGENTA)$(BOLD) ║                                                              ║$(RESET)"
-	@echo "$(MAGENTA)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)😴 À demain !$(RESET)                                              $(MAGENTA)$(BOLD)║$(RESET)"
-	@echo "$(MAGENTA)$(BOLD) ║                                                              ║$(RESET)"
-	@echo "$(MAGENTA)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
-	@echo ""
-else
 	@echo "$(YELLOW)• Arrêt des processus de développement...$(RESET)"
 	@pkill -f "node\|npm\|npx\|yarn\|pnpm\|vite\|webpack\|tsc\|typescript\|ts-node\|tsx\|nodemon\|serve\|http-server\|live-server" 2>/dev/null || true
 	@echo "$(GREEN)  ✓ Processus arrêtés$(RESET)"
@@ -287,6 +265,5 @@ else
 	@echo "$(MAGENTA)$(BOLD) ║                                                              ║$(RESET)"
 	@echo "$(MAGENTA)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
 	@echo ""
-endif
 
 .PHONY: help dev install clean nuke kill-ports reset-db goodnight
