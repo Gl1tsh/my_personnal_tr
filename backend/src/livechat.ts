@@ -13,6 +13,8 @@ const gameRooms = new Map<String, { host: string, client?: string, gameState?: a
 
 io.on("connection", (socket) => {
   console.log("📡 Client connecté:", socket.id);
+  console.log("🔄 Test recompilation automatique");
+  console.log("✅ Recompilation fonctionne !");
   clients.set(socket.id, socket);
   // Pseudo par défaut en attendant que le client envoie le sien
   usernames.set(socket.id, `User_${socket.id.substring(0, 6)}`);

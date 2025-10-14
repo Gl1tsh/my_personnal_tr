@@ -105,9 +105,6 @@ dev:
 	@echo "$(BLUE)$(BOLD) 🚀 Starting development server...$(RESET)"
 	@echo ""
 	@make kill-ports
-	@echo "$(BLUE) ⚡ Building backend...$(RESET)"
-	@cd $(BACK_DIR) && npm run build > /dev/null 2>&1
-	@echo "$(GREEN) ✓ Backend ready$(RESET)"
 	@echo ""
 	@echo "$(BLUE) 📡 Starting services...$(RESET)"
 	@bash -c '\
