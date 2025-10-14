@@ -53,8 +53,15 @@ export async function initChatPage() {
 
   //  Forcer la mise à jour du pseudo sur le socket si on est connecté
   if (userProfile && userProfile.name) {
-    updateUsernameOnServer(userProfile.name);
-    console.log(' Mise à jour forcée du pseudo sur le socket:', userProfile.name);
+    if (socket.connected) {
+      updateUsernameOnServer(userProfile.name);
+      console.log(' Mise à jour forcée du pseudo sur le socket:', userProfile.name);
+    } else {
+      socket.once('connect', () => {
+        updateUsernameOnServer(userProfile.name);
+        console.log(' Mise à jour différée du pseudo sur le socket:', userProfile.name);
+      });
+    }
   }
 
   const blockedUsers = new Set<string>(JSON.parse(localStorage.getItem('blockedUsers') || '[]'));

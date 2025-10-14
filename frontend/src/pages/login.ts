@@ -64,9 +64,16 @@ export function initLoginPage() {
         // Mettre à jour la navbar sans refresh
         if (window.updateNavAuthLinks) window.updateNavAuthLinks();
         // Mettre à jour le pseudo sur le socket maintenant qu'on est connecté
-        const { updateUsernameOnServer } = await import('../socket.js');
-        updateUsernameOnServer(result.user.name);
-        console.log('🔄 Pseudo mis à jour sur le socket:', result.user.name);
+        const { updateUsernameOnServer, socket } = await import('../socket.js');
+        if (socket.connected) {
+          updateUsernameOnServer(result.user.name);
+          console.log('🔄 Pseudo mis à jour sur le socket:', result.user.name);
+        } else {
+          socket.once('connect', () => {
+            updateUsernameOnServer(result.user.name);
+            console.log('🔄 Pseudo mis à jour (différé) sur le socket:', result.user.name);
+          });
+        }
       }
 
       // 🎉 Notification de succès

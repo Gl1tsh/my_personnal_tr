@@ -79,6 +79,8 @@ export function startGame() {
   if (!gameState.gameRunning) {
     const mode = getGameMode();
     if (!mode) {
+      // Affichage d'un message utilisateur si le mode n'est pas défini
+      alert('Erreur : le mode de jeu n\'est pas défini. Merci de choisir un mode avant de lancer la partie.');
       console.error('Mode de jeu non défini');
       return;
     }
@@ -87,7 +89,7 @@ export function startGame() {
     gameState.gameRunning = true;
     gameState.gamePaused = false;
     const messageElement = document.getElementById('gameMessageWinOrLose') as HTMLDivElement;
-    messageElement.classList.add('hidden');
+    if (messageElement) messageElement.classList.add('hidden');
 
     // Configurer le jeu selon le mode
     if (mode === 'solo') {
@@ -130,8 +132,9 @@ export function startGame() {
         });
       }
       // Don't call update here for remote
-      (document.getElementById('startGameButton') as HTMLButtonElement).disabled = true;
-      messageElement.classList.remove('text-green-400', 'text-red-400');
+      const startBtn = document.getElementById('startGameButton') as HTMLButtonElement;
+      if (startBtn) startBtn.disabled = true;
+      if (messageElement) messageElement.classList.remove('text-green-400', 'text-red-400');
       return; // Don't call update at the end
     } else if (mode === 'tournament') {
       // À implémenter plus tard
@@ -139,8 +142,9 @@ export function startGame() {
     }
 
     startCountdown();
-    (document.getElementById('startGameButton') as HTMLButtonElement).disabled = true;
-    messageElement.classList.remove('text-green-400', 'text-red-400');
+    const startBtn = document.getElementById('startGameButton') as HTMLButtonElement;
+    if (startBtn) startBtn.disabled = true;
+    if (messageElement) messageElement.classList.remove('text-green-400', 'text-red-400');
   }
 }
 
@@ -188,7 +192,9 @@ export function endGame() {
     buttonsDiv.innerHTML = '<button id="leaveGameButton" class="btn btn-primary">Leave</button>';
     const leaveButton = document.getElementById('leaveGameButton') as HTMLButtonElement;
     leaveButton.addEventListener('click', () => {
-      // Emit leave_game to reset the room
+      // Reset game state (invisible)
+      resetGameState();
+      // Emit leave_game to reset the room (serveur)
       socket.emit('leave_game');
       // Navigate to livechat
       window.history.pushState({ page: 'live-chat' }, '', '#live-chat');
