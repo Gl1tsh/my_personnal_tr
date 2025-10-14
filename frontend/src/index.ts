@@ -113,6 +113,19 @@ export function navigateTo(page: string, updateHistory = true) {
     page = 'home';
   }
 
+  // Contrôle d'accès : live-chat et profile nécessitent d'être authentifié
+  const protectedPages = ['live-chat', 'profile'];
+  const token = sessionStorage.getItem('authToken');
+  if (protectedPages.includes(page) && !token) {
+    console.warn(`🔒 Accès refusé à ${page} (non authentifié), redirection vers login.`);
+    page = 'login';
+    if (updateHistory) {
+      window.history.pushState({ page }, '', `#${page}`);
+    }
+    showPage(page);
+    return;
+  }
+
   // Update URL if needed
   if (updateHistory) {
     window.history.pushState({ page }, '', `#${page}`);
@@ -123,7 +136,6 @@ export function navigateTo(page: string, updateHistory = true) {
 
   // Handle page-specific initialization
   const currentPage = page.split('/')[0];
-  
   switch (currentPage) {
     case 'game':
       initGame();
