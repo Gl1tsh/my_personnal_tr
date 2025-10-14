@@ -53,6 +53,7 @@ menu:
 	@echo "$(CYAN) ║$(WHITE)  $(BOLD)2.$(RESET) $(YELLOW)Installer les dépendances$(RESET)                              $(CYAN)║$(RESET)"
 	@echo "$(CYAN) ║$(WHITE)  $(BOLD)3.$(RESET) $(RED)Nettoyer le projet$(RESET)                                     $(CYAN)║$(RESET)"
 	@echo "$(CYAN) ║$(WHITE)  $(BOLD)4.$(RESET) $(RED)Vider la base de données$(RESET)                               $(CYAN)$(BOLD)║$(RESET)"
+	@echo "$(CYAN) ║$(WHITE)  $(BOLD)5.$(RESET) $(MAGENTA)Goodnight (Nettoyage approfondi)$(RESET)                       $(CYAN)║$(RESET)"
 	@echo "$(CYAN) ║$(WHITE)  $(BOLD)0.$(RESET) $(DIM)Quitter$(RESET)                                                $(CYAN)║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ║                                                            ║$(RESET)"
 	@echo "$(CYAN)$(BOLD) ╠════════════════════════════════════════════════════════════╣$(RESET)"
@@ -68,8 +69,9 @@ menu:
 			2) echo ""; make install; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
 			3) echo ""; make clean; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
 			4) echo ""; make reset-db; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
+			5) echo ""; make goodnight; echo "Appuyez sur Entrée pour revenir au menu..."; read dummy; make menu; break ;; \
 			0) echo "$(GREEN)$(BOLD)Au revoir ! 👋$(RESET)"; break ;; \
-			*) echo "$(RED)❌ Choix invalide ! Veuillez choisir entre 0-4.$(RESET)"; echo "" ;; \
+			*) echo "$(RED)❌ Choix invalide ! Veuillez choisir entre 0-5.$(RESET)"; echo "" ;; \
 		esac \
 	done
 
@@ -259,4 +261,60 @@ else
 	@echo "$(YELLOW)Use 'make clean' instead$(RESET)"
 endif
 
-.PHONY: help dev install clean nuke kill-ports reset-db
+# Goodnight - Nettoyage approfondi pour quitter
+goodnight:
+	@echo ""
+	@echo "$(MAGENTA)$(BOLD) 🌙 Bonne nuit ! Nettoyage approfondi en cours...$(RESET)"
+	@echo ""
+ifeq ($(OS),Windows_NT)
+	@powershell -ExecutionPolicy Bypass -File "scripts\\ultimate-clean.ps1" -Force -Quiet
+	@echo ""
+	@echo "$(MAGENTA)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║                      🌙 BONNE NUIT ! 🌙                      ║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Nettoyage approfondi terminé$(RESET)                           $(MAGENTA)$(BOLD)║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Ordinateur optimisé$(RESET)                                   $(MAGENTA)$(BOLD)║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)😴 À demain !$(RESET)                                              $(MAGENTA)$(BOLD)║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
+	@echo ""
+else
+	@echo "$(YELLOW)• Arrêt des processus de développement...$(RESET)"
+	@pkill -f "node\|npm\|npx\|yarn\|pnpm\|vite\|webpack\|tsc\|typescript\|ts-node\|tsx\|nodemon\|serve\|http-server\|live-server" 2>/dev/null || true
+	@echo "$(GREEN)  ✓ Processus arrêtés$(RESET)"
+	@echo "$(YELLOW)• Libération des ports de développement...$(RESET)"
+	@lsof -ti:3000,3001,3002,3003,4000,5000,5173,5174,8000,8080,8081,9000 | xargs -r kill -9 2>/dev/null || true
+	@sleep 2
+	@echo "$(GREEN)  ✓ Ports libérés$(RESET)"
+	@echo "$(YELLOW)• Suppression des dossiers de build...$(RESET)"
+	@find . -type d \( -name "dist" -o -name "build" -o -name ".vite" -o -name ".next" -o -name "coverage" \) -exec rm -rf {} + 2>/dev/null || true
+	@echo "$(GREEN)  ✓ Dossiers de build supprimés$(RESET)"
+	@echo "$(YELLOW)• Suppression des dépendances...$(RESET)"
+	@find . -name "node_modules" -type d -exec rm -rf {} + 2>/dev/null || true
+	@echo "$(GREEN)  ✓ Dossiers node_modules supprimés$(RESET)"
+	@echo "$(YELLOW)• Nettoyage des caches...$(RESET)"
+	@npm cache clean --force 2>/dev/null || true
+	@echo "$(GREEN)  ✓ Cache npm vidé$(RESET)"
+	@echo "$(YELLOW)• Suppression des bases de données...$(RESET)"
+	@find . -name "*.sqlite" -o -name "*.db" -exec rm -f {} + 2>/dev/null || true
+	@echo "$(GREEN)  ✓ Bases de données supprimées$(RESET)"
+	@echo "$(YELLOW)• Suppression des fichiers temporaires...$(RESET)"
+	@find . \( -name "*.log" -o -name "*.tmp" -o -name "*.tsbuildinfo" -o -name "package-lock.json" \) -exec rm -f {} + 2>/dev/null || true
+	@echo "$(GREEN)  ✓ Fichiers temporaires supprimés$(RESET)"
+	@echo ""
+	@echo "$(MAGENTA)$(BOLD) ╔══════════════════════════════════════════════════════════════╗$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║                      🌙 BONNE NUIT ! 🌙                      ║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ╠══════════════════════════════════════════════════════════════╣$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Nettoyage approfondi terminé$(RESET)                             $(MAGENTA)$(BOLD)║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║$(RESET)  $(GREEN)$(BOLD)✅ Ordinateur optimisé$(RESET)                                      $(MAGENTA)$(BOLD)║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║$(RESET)  $(WHITE)$(BOLD)😴 À demain !$(RESET)                                               $(MAGENTA)$(BOLD)║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ║                                                              ║$(RESET)"
+	@echo "$(MAGENTA)$(BOLD) ╚══════════════════════════════════════════════════════════════╝$(RESET)"
+	@echo ""
+endif
+
+.PHONY: help dev install clean nuke kill-ports reset-db goodnight
