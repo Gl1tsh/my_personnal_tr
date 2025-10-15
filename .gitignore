@@ -11,3 +11,8 @@ frontend/.env
 # Backend gitignore
 backend/dist/
 backend/.env
+
+backend/package-lock.json
+frontend/package-lock.json
+
+backend/uploads/avatars/*
