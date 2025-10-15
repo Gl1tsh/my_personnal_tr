@@ -169,7 +169,7 @@ async function deleteUser(): Promise<boolean> {
 }
 
 // === ÉTATS DE L'UI ===
-function showState(state: 'loading' | 'denied' | 'main' | 'edit'): void {
+function showState(state: 'denied' | 'main' | 'edit'): void {
   $$('[data-state]').forEach(el => {
     el.classList.add('hidden');
   });
@@ -368,7 +368,6 @@ function setupEvents(): void {
 // === INITIALISATION ===
 export async function initProfilePage(): Promise<void> {
   console.log('👤 Initializing Profile page...');
-  showState('loading');
   
   const dmTarget = localStorage.getItem('dmTarget');
   const ownUser = await fetchUser();

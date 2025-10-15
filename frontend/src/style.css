@@ -159,7 +159,6 @@ body {
   font-weight: 500;
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
-  transition: all 0.15s ease;
 }
 
 .nav-link:hover {
@@ -211,7 +210,6 @@ body {
   border-radius: var(--radius-md);
   border: none;
   cursor: pointer;
-  transition: all 0.15s ease;
   text-decoration: none;
   outline: none;
   min-height: 40px;
@@ -229,8 +227,6 @@ body {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-blue-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
 }
 
 .btn-secondary {
@@ -242,7 +238,6 @@ body {
 .btn-secondary:hover:not(:disabled) {
   background: var(--bg-tertiary);
   border-color: var(--border-hover);
-  transform: translateY(-1px);
 }
 
 .btn-ghost {
@@ -300,7 +295,6 @@ body {
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
   color: var(--text-primary);
-  transition: all 0.15s ease;
   outline: none;
 }
 
